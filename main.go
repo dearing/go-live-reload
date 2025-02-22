@@ -21,23 +21,7 @@ func main() {
 
 	flag.Parse()
 
-	opts := &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	}
-
-	switch *logLevel {
-	case "debug":
-		opts.Level = slog.LevelDebug
-	case "info":
-		opts.Level = slog.LevelInfo
-	case "warn":
-		opts.Level = slog.LevelWarn
-	case "error":
-		opts.Level = slog.LevelError
-	default:
-		slog.Error("main", "log-level", *logLevel)
-		return
-	}
+	slog.SetLogLoggerLevel(parseLogLevel(*logLevel))
 
 	if *argVersion {
 		version()
@@ -80,5 +64,22 @@ func main() {
 		slog.Info("interrupt signal received")
 		cancel()
 		return
+	}
+}
+
+func parseLogLevel(value string) slog.Level {
+
+	switch value {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		slog.Warn("main/parseLogLevel", "unknown log level", value)
+		return slog.LevelDebug
 	}
 }
