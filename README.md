@@ -28,3 +28,49 @@ downgrade => go get -tool github.com/dearing/go-live-reload@v1.0.0
 uninstall => go get -tool github.com/dearing/go-live-reload@none
 ```
 ---
+
+## usage
+
+```
+Usage of /tmp/go-build99152753/b001/exe/go-live-reload:
+  -heartbeat duration
+        duration between checks (default 1s)
+  -init-config
+        initialize and save a new config file
+  -load-config string
+        load a config file (default "go-live-reload.json")
+```
+
+## example config
+
+```json
+{
+  "name": "myserver",
+  "description": "my simple http server",
+  "builds": [
+    {
+      "Name": "myserver",
+      "SrcDir": ".",
+      "OutDir": "build",
+      "BuildArgs": [
+        "build",
+        "-o",
+        "build/myserver"
+      ],
+      "BuildEnvirons": null,
+      "RunCommand": "./build/myserver",
+      "RunArgs": [
+        "--bind",
+        ":8081"
+      ],
+      "RunEnvirons": null,
+      "RunWorkDir": "build",
+      "Globs": [
+        "test/*.go",
+        "test/wwwroot/*"
+      ],
+      "HeartBeat": 1000000000
+    }
+  ]
+}
+```
