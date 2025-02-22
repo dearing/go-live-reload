@@ -98,8 +98,6 @@ func (b *Build) Start(parentContext context.Context, restart chan struct{}) {
 			<-restart // block until the watcher says something changed
 		}
 
-		//b.Memoized = CheckFiles(b.Globs)
-
 		runContext, runCancel := context.WithCancel(parentContext)
 		go b.Run(runContext)
 
@@ -141,7 +139,7 @@ func (b *Build) Watch(parentContext context.Context, restart chan struct{}) {
 			start := time.Now()
 			files := CheckFiles(b.Globs)
 
-			// technically and expensive operation but results so far are acceptable
+			// technically an expensive operation but results so far are acceptable
 			if reflect.DeepEqual(memoized, files) {
 				slog.Debug("build/watch no change detected", "name", b.Name, "duration", time.Since(start))
 				continue
@@ -158,7 +156,7 @@ func (b *Build) Watch(parentContext context.Context, restart chan struct{}) {
 //
 //	ex: files := CheckFiles([]string{"test/*.go", "test/wwwroot/*"})
 func CheckFiles(globs []string) []fs.FileInfo {
-	scratch := []fs.FileInfo{}
+	files := []fs.FileInfo{}
 
 	for _, glob := range globs {
 		matches, err := filepath.Glob(glob)
@@ -176,10 +174,10 @@ func CheckFiles(globs []string) []fs.FileInfo {
 				continue
 			}
 
-			scratch = append(scratch, file)
+			files = append(files, file)
 		}
 
 	}
 
-	return scratch
+	return files
 }

@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var heartBeat = flag.Duration("d", 5*time.Second, "duration between checks")
+var heartBeat = flag.Duration("heartbeat", 1*time.Second, "duration between checks")
 var initConfig = flag.Bool("init-config", false, "initialize and save a new config file")
 var loadConfig = flag.String("load-config", "go-live-reload.json", "load a config file")
 
