@@ -13,19 +13,18 @@ import (
 
 // Build is a struct that represents a build and run process
 type Build struct {
-	Name          string   //b.Name of the build process
-	SrcDir        string   // source directory scoped for go build
-	OutDir        string   // output directory for build artifacts
-	BuildArgs     []string // appended flags for the go build command
-	BuildEnvirons []string // appended environment variables for the go build command
-	RunCommand    string   // command to run the built artifact
-	RunArgs       []string // appended arguments for the go run command
-	RunEnvirons   []string // appended environment variables for the go run command
-	RunWorkDir    string   // working directory for the go run command
-	Globs         []string // globs to watch for changes
-	Memoized      []fs.FileInfo
-	Restart       chan struct{}
-	Duration      time.Duration
+	Name          string        // `json:"name, omitzero"`
+	SrcDir        string        // `json:"srcDir, omitzero"`
+	OutDir        string        // `json:"outDir, omitzero"`
+	BuildArgs     []string      // `json:"buildArgs, omitzero"`
+	BuildEnvirons []string      // `json:"buildEnvirons, omitzero"`
+	RunCommand    string        // `json:"runCommand, omitzero"`
+	RunArgs       []string      // `json:"runArgs, omitzero"`
+	RunEnvirons   []string      // `json:"runEnvirons, omitzero"`
+	RunWorkDir    string        // `json:"runWorkDir, omitzero"`
+	Globs         []string      // `json:"globs, omitzero"`
+	HeartBeat     time.Duration // `json:"heartBeat, omitzero"`
+
 }
 
 // Build executes the "go" + BuildArgs command in the SrcDir and return any error.
@@ -87,7 +86,7 @@ func (b *Build) Run(ctx context.Context) {
 // fails, the routine halts until it receives a signal from the restart channel.
 //
 // ex: b.Start(parentContext)
-func (b *Build) Start(parentContext context.Context) {
+func (b *Build) Start(parentContext context.Context, restart chan struct{}) {
 
 	slog.Info("build/watch start", "name", b.Name)
 
@@ -96,10 +95,10 @@ func (b *Build) Start(parentContext context.Context) {
 		err := b.Build()
 		if err != nil {
 			slog.Error("build/watch", "name", b.Name, "error", err)
-			<-b.Restart // block until the watcher says something changed
+			<-restart // block until the watcher says something changed
 		}
 
-		b.Memoized = CheckFiles(b.Globs)
+		//b.Memoized = CheckFiles(b.Globs)
 
 		runContext, runCancel := context.WithCancel(parentContext)
 		go b.Run(runContext)
@@ -109,7 +108,7 @@ func (b *Build) Start(parentContext context.Context) {
 			slog.Warn("build/watch parent interrupt", "name", b.Name)
 			runCancel()
 			return
-		case <-b.Restart:
+		case <-restart:
 			slog.Warn("build/watch watcher interrupt", "name", b.Name)
 			runCancel()
 			continue
@@ -124,12 +123,15 @@ func (b *Build) Start(parentContext context.Context) {
 // signals the restart channel.
 //
 // ex: b.Watch(ctx)
-func (b *Build) Watch(parentContext context.Context) {
+func (b *Build) Watch(parentContext context.Context, restart chan struct{}) {
 
-	tick := time.NewTicker(*duration)
+	tick := time.NewTicker(b.HeartBeat)
 	defer tick.Stop()
 
+	memoized := CheckFiles(b.Globs)
+
 	for {
+
 		select {
 		case <-parentContext.Done():
 			slog.Error("build/watch parent interrupt", "name", b.Name)
@@ -140,14 +142,14 @@ func (b *Build) Watch(parentContext context.Context) {
 			files := CheckFiles(b.Globs)
 
 			// technically and expensive operation but results so far are acceptable
-			if reflect.DeepEqual(b.Memoized, files) {
+			if reflect.DeepEqual(memoized, files) {
 				slog.Debug("build/watch no change detected", "name", b.Name, "duration", time.Since(start))
 				continue
 			}
 
-			b.Memoized = files
 			slog.Debug("build/watch change detected", "name", b.Name, "duration", time.Since(start))
-			b.Restart <- struct{}{}
+			restart <- struct{}{}
+			memoized = files
 		}
 	}
 }

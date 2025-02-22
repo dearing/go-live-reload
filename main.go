@@ -10,37 +10,59 @@ import (
 	"time"
 )
 
-var duration = flag.Duration("d", 5*time.Second, "duration between checks")
+var heartBeat = flag.Duration("d", 5*time.Second, "duration between checks")
+var initConfig = flag.Bool("init-config", false, "initialize and save a new config file")
+var loadConfig = flag.String("load-config", "go-live-reload.json", "load a config file")
 
 func main() {
 
 	flag.Parse()
 
-	slog.Info("go-live-reload started")
-
-	slog.Info("main", "duration", *duration)
-
-	chanSig := make(chan os.Signal, 1)
-	signal.Notify(chanSig, syscall.SIGINT, syscall.SIGTERM)
-
-	b := &Build{
-		Name:       "github.com/dearing/go-live-reload/myserver",
-		SrcDir:     "test",
-		OutDir:     "test",
-		BuildArgs:  []string{"build", "-o", "myserver"},
-		RunCommand: "./myserver",
-		RunArgs:    []string{"--bind", ":8081"},
-		RunWorkDir: "test",
-		Globs:      []string{"test/*.go", "test/wwwroot/*"},
-		Restart:    make(chan struct{}),
-		Duration:   *duration,
+	if *initConfig {
+		c := &Config{
+			Name:        "go-live-reload",
+			Description: "A simple live reload server",
+			Builds: []Build{
+				{
+					Name:       "myserver",
+					SrcDir:     ".",
+					OutDir:     "build",
+					BuildArgs:  []string{"build", "-o", "build/myserver"},
+					RunCommand: "./build/myserver",
+					RunArgs:    []string{"--bind", ":8081"},
+					RunWorkDir: "test",
+					Globs:      []string{"test/*.go", "test/wwwroot/*"},
+					HeartBeat:  *heartBeat,
+				},
+			},
+		}
+		err := c.Save(*loadConfig)
+		if err != nil {
+			slog.Error("main/init-config", "error", err)
+		}
+		return
 	}
+
+	config := &Config{}
+	err := config.Load(*loadConfig)
+	if err != nil {
+		slog.Error("main/load-config", "error", err)
+		return
+	}
+
+	slog.Info("main ready", "load-config", *loadConfig)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go b.Start(ctx)
-	go b.Watch(ctx)
+	for _, b := range config.Builds {
+		restart := make(chan struct{})
+		go b.Start(ctx, restart)
+		go b.Watch(ctx, restart)
+	}
+
+	chanSig := make(chan os.Signal, 1)
+	signal.Notify(chanSig, syscall.SIGINT, syscall.SIGTERM)
 
 	for range chanSig {
 		slog.Info("interrupt signal received")
