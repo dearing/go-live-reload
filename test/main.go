@@ -9,20 +9,20 @@ import (
 	"syscall"
 )
 
-var bind = flag.String("bind", ":8080", "Bind address")
+var bind = flag.String("bind", ":8080", "bind address")
 
 func main() {
 
 	flag.Parse()
 
-	slog.Info("Hello World")
+	slog.Info("hello world")
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
 	http.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		slog.Info("Hello received")
-		w.Write([]byte("Hello"))
+		slog.Info("hello received")
+		w.Write([]byte("hello!"))
 	})
 
 	http.Handle("/wwwroot/", http.StripPrefix("/wwwroot/", http.FileServer(http.Dir("wwwroot"))))
