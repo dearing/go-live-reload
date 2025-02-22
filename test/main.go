@@ -47,4 +47,6 @@ func main() {
 	if err := server.Shutdown(ctx); err != nil {
 		slog.Error("server shutdown", "error", err)
 	}
+
+	slog.Info("server stopped")
 }
