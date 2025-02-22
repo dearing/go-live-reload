@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"reflect"
 	"time"
 )
 
@@ -139,15 +138,41 @@ func (b *Build) Watch(parentContext context.Context, restart chan struct{}) {
 			start := time.Now()
 			files := CheckFiles(b.Globs)
 
-			// technically an expensive operation but results so far are acceptable
-			if reflect.DeepEqual(memoized, files) {
-				slog.Debug("build/watch no change detected", "name", b.Name, "duration", time.Since(start))
+			if len(files) == 0 {
+				slog.Warn("build/watch no files found", "name", b.Name)
 				continue
 			}
 
-			slog.Debug("build/watch change detected", "name", b.Name, "duration", time.Since(start))
-			restart <- struct{}{}
-			memoized = files
+			if len(memoized) == 0 {
+				slog.Warn("build/watch no files found", "name", b.Name)
+				continue
+			}
+
+			if len(files) != len(memoized) {
+				slog.Debug("build/watch change detected", "name", b.Name, "duration", time.Since(start))
+				restart <- struct{}{}
+				memoized = files
+				continue
+			}
+
+			for i, file := range files {
+				if file.ModTime() != memoized[i].ModTime() {
+					slog.Debug("build/watch change detected", "name", b.Name, "duration", time.Since(start))
+					restart <- struct{}{}
+					memoized = files
+					continue
+				}
+			}
+
+			// // technically an expensive operation but results so far are acceptable
+			// if reflect.DeepEqual(memoized, files) {
+			// 	slog.Debug("build/watch no change detected", "name", b.Name, "duration", time.Since(start))
+			// 	continue
+			// }
+
+			// slog.Debug("build/watch change detected", "name", b.Name, "duration", time.Since(start))
+			// restart <- struct{}{}
+			// memoized = files
 		}
 	}
 }
