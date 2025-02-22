@@ -32,7 +32,7 @@ uninstall => go get -tool github.com/dearing/go-live-reload@none
 ## usage
 
 ```
-Usage of /tmp/go-build99152753/b001/exe/go-live-reload:
+Usage of [go tool] go-live-reload:
   -heartbeat duration
         duration between checks (default 1s)
   -init-config
