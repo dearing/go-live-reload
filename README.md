@@ -3,7 +3,7 @@
 (alpha) go tool to build and run continuously
 
 >[!CAUTION]
->this software is fresh out of over; caveat emptor
+>this software is fresh out of oven, so buyer beware! (but I'm already using it myself)
 
 ---
 ## global install
