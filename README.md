@@ -1,2 +1,5 @@
 # go-live-reload
-go tool to watch a directory for changes, recompile and run
+(alpha) go tool to build and run continuously
+>[!CAUTION]
+>this software is fresh out of over; caveat emptor
+---
