@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-// Build is a struct that represents a build process
+// Build is a struct that represents a build and run process
 type Build struct {
 	Name          string   //b.Name of the build process
 	SrcDir        string   // source directory scoped for go build
@@ -28,7 +28,9 @@ type Build struct {
 	Duration      time.Duration
 }
 
-// Build is a method on the Build struct that executes the go build command
+// Build executes the "go" + BuildArgs command in the SrcDir and return any error.
+//
+// ex: err := b.Build()
 func (b *Build) Build() error {
 
 	slog.Info("build", "name", b.Name, "srcDir", b.SrcDir, "outDir", b.OutDir, "flags", b.BuildArgs)
@@ -55,6 +57,9 @@ func (b *Build) Build() error {
 	return nil
 }
 
+// Run executes the configured command with args and environment variables
+//
+// ex: b.Run(ctx)
 func (b *Build) Run(ctx context.Context) {
 
 	slog.Info("build/run start", "name", b.Name, "command", b.RunCommand, "workDir", b.RunWorkDir, "args", b.RunArgs, "environs", b.RunEnvirons)
@@ -75,9 +80,13 @@ func (b *Build) Run(ctx context.Context) {
 	slog.Info("build/run completed", "name", b.Name)
 }
 
-// Watch is a method on the Build struct that watches for changes in the globs
+// Start manages the build and run processes
 //
-// ex: b.Start(ctx)
+// Calling cancel on the parent context will stop the build and run processes;
+// otherwise the restart channel will trigger a rebuild and rerun. If a build
+// fails, the routine halts until it receives a signal from the restart channel.
+//
+// ex: b.Start(parentContext)
 func (b *Build) Start(parentContext context.Context) {
 
 	slog.Info("build/watch start", "name", b.Name)
@@ -108,7 +117,11 @@ func (b *Build) Start(parentContext context.Context) {
 	}
 }
 
-// Watch is a method on the Build struct that watches for changes in the globs
+// Watch starts a ticker and compares scans for changes in the files.
+//
+// Calling cancel on the parent context will stop the watch process otherwise
+// it ticks ever duration to check for changes. If a change is detected it
+// signals the restart channel.
 //
 // ex: b.Watch(ctx)
 func (b *Build) Watch(parentContext context.Context) {
@@ -122,11 +135,13 @@ func (b *Build) Watch(parentContext context.Context) {
 			slog.Error("build/watch parent interrupt", "name", b.Name)
 			return
 		case <-tick.C:
+
 			start := time.Now()
 			files := CheckFiles(b.Globs)
 
+			// technically and expensive operation but results so far are acceptable
 			if reflect.DeepEqual(b.Memoized, files) {
-				//slog.Info("build/watch no change detected", "name", b.Name, "duration", time.Since(start))
+				slog.Debug("build/watch no change detected", "name", b.Name, "duration", time.Since(start))
 				continue
 			}
 
