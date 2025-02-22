@@ -11,44 +11,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
-	"time"
-)
-
-type FileSignature struct {
-	Hash         string
-	CreationTime time.Time
-	Modification time.Time
-	Size         int64
-}
-
-func (fs *FileSignature) Compare(other *FileSignature) int {
-	if fs.Hash != other.Hash {
-		return FileModified
-	}
-
-	if fs.Size != other.Size {
-		return FileModified
-	}
-
-	if fs.CreationTime != other.CreationTime {
-		return FileModified
-	}
-
-	if fs.Modification != other.Modification {
-		return FileModified
-	}
-
-	return NoOp
-}
-
-const (
-	NoOp = iota
-	FileCreated
-	FileDeleted
-	FileModified
-	DirectoryCreated
-	DirectoryDeleted
-	DirectoryModified
 )
 
 func main() {
@@ -65,9 +27,6 @@ func main() {
 	errChan := make(chan error)
 	chanSig := make(chan os.Signal, 1)
 	signal.Notify(chanSig, syscall.SIGINT, syscall.SIGTERM)
-
-	builds := make(chan *Build, 2)
-	//go Builder(builds)
 
 	b := &Build{
 		Name:      "github.com/dearing/go-live/reload/test",
@@ -94,7 +53,6 @@ func main() {
 		case <-chanSig:
 			slog.Info("shutting down")
 			cancel()
-			close(builds)
 			return
 		}
 	}
