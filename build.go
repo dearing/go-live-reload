@@ -32,8 +32,13 @@ type Build struct {
 
 }
 
+func (b *Build) BuildAndRun(ctx context.Context) {
+	b.Build(ctx)
+	b.Run(ctx)
+}
+
 // Build is a method on the Build struct that executes the go build command
-func (b *Build) Build() {
+func (b *Build) Build(ctx context.Context) {
 
 	slog.Info("build", "name", b.Name, "srcDir", b.SrcDir, "outDir", b.OutDir, "flags", b.BuildArgs)
 

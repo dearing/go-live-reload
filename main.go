@@ -29,12 +29,11 @@ func main() {
 	signal.Notify(chanSig, syscall.SIGINT, syscall.SIGTERM)
 
 	b := &Build{
-		Name:      "github.com/dearing/go-live/reload/test",
-		ChanError: errChan,
-		SrcDir:    "test",
-		OutDir:    "test",
-		BuildArgs: []string{"build", "-o", "myserver"},
-
+		Name:       "github.com/dearing/go-live-reload/myserver",
+		ChanError:  errChan,
+		SrcDir:     "test",
+		OutDir:     "test",
+		BuildArgs:  []string{"build", "-o", "myserver"},
 		RunCommand: "./myserver",
 		RunArgs:    []string{"--bind", ":8081"},
 		RunWorkDir: "test",
@@ -42,8 +41,7 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	b.Build()
-	b.Run(ctx)
+	b.BuildAndRun(ctx)
 
 	for {
 		select {
@@ -51,7 +49,7 @@ func main() {
 		case err := <-errChan:
 			slog.Error("main", "error", err)
 		case <-chanSig:
-			slog.Info("shutting down")
+			slog.Info("interrupt signal received")
 			cancel()
 			return
 		}
