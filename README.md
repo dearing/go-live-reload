@@ -22,9 +22,9 @@ go tool go-live-reload
 ```
 ## tool maintenance tips
 ```
-      pin => go get -tool github.com/dearing/go-live-reload@v1.0.1
+      pin => go get -tool github.com/dearing/go-live-reload@v0.0.2
    update => go get -tool github.com/dearing/go-live-reload@latest
-downgrade => go get -tool github.com/dearing/go-live-reload@v1.0.0
+downgrade => go get -tool github.com/dearing/go-live-reload@v0.0.1
 uninstall => go get -tool github.com/dearing/go-live-reload@none
 ```
 ---
