@@ -28,7 +28,6 @@ func main() {
 		w.Write([]byte("hello world"))
 	})
 
-	//handler.Handle("/wwwroot/", http.StripPrefix("/wwwroot/", http.FileServer(http.Dir("wwwroot"))))
 	handler.Handle("/", http.FileServer(http.Dir("wwwroot")))
 	server := &http.Server{
 		Addr:    *bind,
@@ -48,5 +47,4 @@ func main() {
 	if err := server.Shutdown(ctx); err != nil {
 		slog.Error("server shutdown", "error", err)
 	}
-
 }
