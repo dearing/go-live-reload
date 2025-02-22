@@ -11,6 +11,28 @@ type Config struct {
 	Builds      []Build `json:"builds"`
 }
 
+func NewConfig() *Config {
+
+	c := &Config{
+		Name:        "go-live-reload",
+		Description: "A simple live reload server",
+		Builds: []Build{
+			{
+				Name:       "myserver",
+				SrcDir:     ".",
+				OutDir:     "build",
+				BuildArgs:  []string{"build", "-o", "build/myserver"},
+				RunCommand: "./build/myserver",
+				RunArgs:    []string{"--bind", ":8081"},
+				RunWorkDir: "test",
+				Globs:      []string{"test/*.go", "test/wwwroot/*"},
+				HeartBeat:  *heartBeat,
+			},
+		},
+	}
+	return c
+}
+
 // Save saves a json representation of Config to filename
 //
 //	ex: myConfig.Save("go-live-reload.json")

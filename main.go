@@ -19,27 +19,13 @@ func main() {
 	flag.Parse()
 
 	if *initConfig {
-		c := &Config{
-			Name:        "go-live-reload",
-			Description: "A simple live reload server",
-			Builds: []Build{
-				{
-					Name:       "myserver",
-					SrcDir:     ".",
-					OutDir:     "build",
-					BuildArgs:  []string{"build", "-o", "build/myserver"},
-					RunCommand: "./build/myserver",
-					RunArgs:    []string{"--bind", ":8081"},
-					RunWorkDir: "test",
-					Globs:      []string{"test/*.go", "test/wwwroot/*"},
-					HeartBeat:  *heartBeat,
-				},
-			},
-		}
+		c := NewConfig()
 		err := c.Save(*loadConfig)
 		if err != nil {
 			slog.Error("main/init-config", "error", err)
+			return
 		}
+		slog.Info("main/init-config", "config", *loadConfig)
 		return
 	}
 
