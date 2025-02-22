@@ -71,7 +71,7 @@ func (b *Build) Run(ctx context.Context) {
 
 	err := cmd.Run()
 	if err != nil {
-		slog.Error("build/run", "name", b.Name, "error", err)
+		slog.Warn("build/run", "name", b.Name, "error", err)
 		return
 	}
 
@@ -163,16 +163,6 @@ func (b *Build) Watch(parentContext context.Context, restart chan struct{}) {
 					continue
 				}
 			}
-
-			// // technically an expensive operation but results so far are acceptable
-			// if reflect.DeepEqual(memoized, files) {
-			// 	slog.Debug("build/watch no change detected", "name", b.Name, "duration", time.Since(start))
-			// 	continue
-			// }
-
-			// slog.Debug("build/watch change detected", "name", b.Name, "duration", time.Since(start))
-			// restart <- struct{}{}
-			// memoized = files
 		}
 	}
 }
