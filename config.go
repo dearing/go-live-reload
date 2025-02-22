@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"log/slog"
 	"os"
+	"runtime/debug"
 )
 
 type Config struct {
@@ -61,4 +63,15 @@ func (c *Config) Load(filename string) error {
 		return err
 	}
 	return nil
+}
+
+func version() {
+	// seems like a nice place to sneak in some debug information
+	info, ok := debug.ReadBuildInfo()
+	if ok {
+		slog.Info("build info", "main", info.Main.Path, "version", info.Main.Version)
+		for _, setting := range info.Settings {
+			slog.Info("build info", "key", setting.Key, "value", setting.Value)
+		}
+	}
 }
