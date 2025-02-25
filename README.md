@@ -1,10 +1,6 @@
 # go-live-reload
 
-(alpha) go tool to build and run continuously
-
->[!CAUTION]
->this software is fresh out of oven, so buyer beware! (but I'm already using it myself)
-
+go tool to build and run continuously
 ---
 ## global install
 
