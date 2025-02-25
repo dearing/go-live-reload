@@ -44,20 +44,20 @@ Usage of [go tool] go-live-reload:
 
 ```json
 {
-  "name": "myserver",
-  "description": "my simple http server",
+  "name": "mywebserver",
+  "description": "A simple live reload server",
   "builds": [
     {
-      "Name": "myserver",
+      "Name": "mywebserver",
       "SrcDir": ".",
       "OutDir": "build",
       "BuildArgs": [
         "build",
         "-o",
-        "build/myserver"
+        "build/mywebserver"
       ],
       "BuildEnvirons": null,
-      "RunCommand": "./build/myserver",
+      "RunCommand": "./mywebserver",
       "RunArgs": [
         "--bind",
         ":8081"
@@ -65,8 +65,7 @@ Usage of [go tool] go-live-reload:
       "RunEnvirons": null,
       "RunWorkDir": "build",
       "Globs": [
-        "test/*.go",
-        "test/wwwroot/*"
+        "*.go","embeded/template/*", "embeded/wwwroot/*/*", "embeded/wwwroot/*"
       ],
       "HeartBeat": 1000000000
     }
