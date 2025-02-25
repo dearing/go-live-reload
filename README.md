@@ -5,7 +5,7 @@ go tool to build and run continuously
 This tool will read a configuration which contains a set of build instructions. These instructions will compile and run until a kill signal is sent `(ctrl+c) or (cmd+c)` to the tool where it will in turn send kill signals to the runners. The configurations also include a set of glob patterns to watch for file modifications. These will be scanned based on the `heartbeat` definition and if a mismatch in the count of files or any of those files having a differing modification timestamp, send the kill signal to that specific runner in the set, rebuild and run again. If a build fails, the runner will halt until a `hearbeat` detects a change. See the example config below to get an idea.
 
 >[!TIP]
->Test it out on [mywebserver](https://github.com/dearing/mywebserver).
+>Test it out on [mywebserver](https://github.com/dearing/mywebserver?tab=readme-ov-file#try-out).
 
 ---
 ## global install
