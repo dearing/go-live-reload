@@ -1,0 +1,26 @@
+{
+  "name": "github.com/dearing/webserver",
+  "description": "self config",
+  "builds": [
+    {
+      "name": "go-live-reload",
+      "description": "report debug and exit",
+      "match": [
+        "*.go", "core/*.go", "go.mod", "go.sum"
+      ],
+      "heartBeat": 1000000000,
+      "buildCmd": "go",
+      "buildArgs": [
+        "build",
+        "-o",
+        "build/"
+      ],
+      "buildDir": ".",
+      "runCmd": "./go-live-reload",
+      "runArgs": [
+        "--version"
+      ],
+      "runDir": "build"
+    }
+  ]
+}

@@ -1,11 +1,9 @@
-package main
+package core
 
 import (
 	"encoding/json"
-	"log/slog"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"time"
 )
 
@@ -104,34 +102,4 @@ func (c *Config) Load(filename string) error {
 		return err
 	}
 	return nil
-}
-
-// version retrieves the build information and logs it
-func version() {
-	// seems like a nice place to sneak in some debug information
-	info, ok := debug.ReadBuildInfo()
-	if ok {
-		slog.Info("build info", "main", info.Main.Path, "version", info.Main.Version)
-		for _, setting := range info.Settings {
-			slog.Info("build info", "key", setting.Key, "value", setting.Value)
-		}
-	}
-}
-
-// parseLogLevel converts a string to a slog.Level
-func parseLogLevel(value string) slog.Level {
-
-	switch value {
-	case "debug":
-		return slog.LevelDebug
-	case "info":
-		return slog.LevelInfo
-	case "warn":
-		return slog.LevelWarn
-	case "error":
-		return slog.LevelError
-	default:
-		slog.Warn("parseLogLevel", "unknown log level", value)
-		return slog.LevelDebug
-	}
 }

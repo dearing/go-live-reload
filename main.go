@@ -6,9 +6,12 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"slices"
 	"strings"
 	"syscall"
+
+	"github.com/dearing/go-live-reload/core"
 )
 
 var argVersion = flag.Bool("version", false, "print debug info and exit")
@@ -65,17 +68,17 @@ func main() {
 	flag.Parse()
 
 	// attempt set log level
-	slog.SetLogLoggerLevel(parseLogLevel(*logLevel))
+	slog.SetLogLoggerLevel(ParseLogLevel(*logLevel))
 
 	// if --version is set, print version and exit
 	if *argVersion {
-		version()
+		Version()
 		return
 	}
 
 	// if --init-config is set, create a new config file and exit
 	if *initConfig {
-		c := NewConfig()
+		c := core.NewConfig()
 		err := c.Save(*configFile)
 		if err != nil {
 			slog.Error("init-config", "error", err)
@@ -85,7 +88,7 @@ func main() {
 		return
 	}
 
-	config := &Config{}
+	config := &core.Config{}
 
 	// if no config file is specified, exit
 	if *configFile == "" {
@@ -134,11 +137,13 @@ func main() {
 	builds := 0
 	for _, b := range config.Builds {
 
+		// if groups are defined, skip any that are not in the list
 		if len(groups) != 0 && !slices.Contains(groups, b.Name) {
 			slog.Warn("skipping", "build-group", b.Name)
 			continue
 		}
 
+		// start and watch the build group using the coordinating over the 'restart' channel
 		restart := make(chan struct{})
 		go b.Start(ctx, restart)
 		go b.Watch(ctx, restart)
@@ -152,7 +157,7 @@ func main() {
 		return
 	}
 
-	slog.Info("entering run loop", "count", builds)
+	slog.Info("entering run loop", "build-groups", builds)
 
 	chanSig := make(chan os.Signal, 1)
 	signal.Notify(chanSig, syscall.SIGINT, syscall.SIGTERM)
@@ -162,5 +167,42 @@ func main() {
 		slog.Info("interrupt signal received")
 		cancel()
 		return
+	}
+}
+
+// version retrieves the build information and logs it
+func Version() {
+	// seems like a nice place to sneak in some debug information
+	info, ok := debug.ReadBuildInfo()
+	if ok {
+		slog.Info("buildInfo", "main", info.Main.Path, "goVersion", info.GoVersion, "version", info.Main.Version)
+
+		if len(info.Deps) > 0 {
+			for _, dep := range info.Deps {
+				slog.Info("buildInfo.dep", dep.Path, dep.Version)
+			}
+		}
+
+		for _, setting := range info.Settings {
+			slog.Info("buildInfo.setting", setting.Key, setting.Value)
+		}
+	}
+}
+
+// parseLogLevel converts a string to a slog.Level
+func ParseLogLevel(value string) slog.Level {
+
+	switch value {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		slog.Warn("parseLogLevel", "unknown log level", value)
+		return slog.LevelDebug
 	}
 }
