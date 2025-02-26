@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"runtime/debug"
+	"time"
 )
 
 type Config struct {
@@ -28,8 +29,8 @@ func NewConfig() *Config {
 				RunCommand: "./build/myserver",
 				RunArgs:    []string{"--bind", ":8081"},
 				RunWorkDir: "test",
-				Globs:      []string{"test/*.go", "test/wwwroot/*"},
-				HeartBeat:  *heartBeat,
+				Match:      []string{"test/*.go", "test/wwwroot/*"},
+				HeartBeat:  time.Duration(1 * time.Second),
 			},
 		},
 	}

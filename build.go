@@ -21,7 +21,7 @@ type Build struct {
 	RunArgs       []string      `json:"runArgs,omitzero"`
 	RunEnvirons   []string      `json:"runEnvirons,omitzero"`
 	RunWorkDir    string        `json:"runWorkDir,omitzero"`
-	Globs         []string      `json:"globs,omitzero"`
+	Match         []string      `json:"match,omitzero"`
 	HeartBeat     time.Duration `json:"heartBeat,omitzero"`
 }
 
@@ -124,7 +124,7 @@ func (b *Build) Watch(parentContext context.Context, restart chan struct{}) {
 	tick := time.NewTicker(b.HeartBeat)
 	defer tick.Stop()
 
-	memoized := CheckFiles(b.Globs)
+	memoized := CheckFiles(b.Match)
 
 	for {
 
@@ -135,7 +135,7 @@ func (b *Build) Watch(parentContext context.Context, restart chan struct{}) {
 		case <-tick.C:
 
 			start := time.Now()
-			files := CheckFiles(b.Globs)
+			files := CheckFiles(b.Match)
 
 			if len(files) == 0 {
 				slog.Warn("build/watch no files found", "name", b.Name)
