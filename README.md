@@ -34,13 +34,52 @@ uninstall => go get -tool github.com/dearing/go-live-reload@none
 ## usage
 
 ```
-Usage of [go tool] go-live-reload:
-  -heartbeat duration
-        duration between checks (default 1s)
+Usage: go-live-reload [options]
+
+This tool takes a set of build groups and runs them in parallel. Each build group
+is defined in the configuration file and contains a set of build and run commands
+along with arguments and environment variables. The build group will then watch for
+changes based on the "match" values and restart just itself when a modification
+is detected or if a new file is added or removed. This is based comparing the
+current matches to the previous matches every heartbeat duration. If you find the
+tool is restarting too frequently or there is too much IO pressure, you can increase
+the heartbeat duration to reduce the frequency of checks.
+
+Tips:
+
+1) The --overwrite-heartbeat option is used to temporarily overwrite all build group
+heartbeats with the specified duration. This is useful for tweaking the heartbeat
+based on the host system's performance. Valid options are those that can be parsed
+by Go's time.ParseDuration function. You can observe matches and duration with the
+--log-level=debug option.
+
+ex: go-live-reload --overwrite-heartbeat=500ms --log-level=debug
+
+2) The --build-groups option is used to specify a comma separated list of build groups
+to run. If no build groups are specified, all build groups defined in the config
+will be ran. If no matches are found, the tool will exit with an error.
+
+ex: go-live-reload --build-groups=frontend,backend
+
+3) The ENV lists are appended to the current environment variables. If you need to
+overwrite an environment variable, you can do so by specifying the same key in
+the ENV list. If you need to clear the environment, set the value to an empty list.
+Clearing and then appending is not supported by this tool.
+
+Options:
+
+  -build-groups string
+        comma separated list of build groups to run
+  -config-file string
+        load a config file (default "go-live-reload.json")
   -init-config
         initialize and save a new config file
-  -load-config string
-        load a config file (default "go-live-reload.json")
+  -log-level string
+        log level (debug, info, warn, error) (default "info")
+  -overwrite-heartbeat duration
+        temporarily overwrite all build group heartbeats
+  -version
+        print debug info and exit
 ```
 
 ## example config
