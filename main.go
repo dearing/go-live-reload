@@ -25,9 +25,6 @@ func usage() {
 	println(`Usage: go-live-reload [options]
 
 Note about the --overwrite-heartbeat option:
-ParseDuration parses a duration string. A duration string is a possibly signed 
-sequence of decimal numbers, each with optional fraction and a unit suffix, 
-such as "300ms", "-1.5h" or "2h45m". 
 
 Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
@@ -135,26 +132,10 @@ func main() {
 	chanSig := make(chan os.Signal, 1)
 	signal.Notify(chanSig, syscall.SIGINT, syscall.SIGTERM)
 
+	// block until we receive an interrupt signal
 	for range chanSig {
 		slog.Info("interrupt signal received")
 		cancel()
 		return
-	}
-}
-
-func parseLogLevel(value string) slog.Level {
-
-	switch value {
-	case "debug":
-		return slog.LevelDebug
-	case "info":
-		return slog.LevelInfo
-	case "warn":
-		return slog.LevelWarn
-	case "error":
-		return slog.LevelError
-	default:
-		slog.Warn("parseLogLevel", "unknown log level", value)
-		return slog.LevelDebug
 	}
 }

@@ -22,15 +22,16 @@ func NewConfig() *Config {
 		Description: "A simple live reload server",
 		Builds: []Build{
 			{
-				Name:       "myserver",
-				SrcDir:     ".",
-				OutDir:     "build",
-				BuildArgs:  []string{"build", "-o", "build/myserver"},
-				RunCommand: "./build/myserver",
-				RunArgs:    []string{"--bind", ":8081"},
-				RunWorkDir: "test",
-				Match:      []string{"test/*.go", "test/wwwroot/*"},
-				HeartBeat:  time.Duration(1 * time.Second),
+				Name:         "myserver",
+				Description:  "A simple web server",
+				BuildCommand: "go",
+				BuildArgs:    []string{"build", "-o", "build/myserver"},
+				BuildWorkDir: "test",
+				RunCommand:   "./build/myserver",
+				RunArgs:      []string{"--bind", ":8081"},
+				RunWorkDir:   "test",
+				Match:        []string{"test/*.go", "test/wwwroot/*"},
+				HeartBeat:    time.Duration(1 * time.Second),
 			},
 		},
 	}
@@ -67,6 +68,7 @@ func (c *Config) Load(filename string) error {
 	return nil
 }
 
+// version retrieves the build information and logs it
 func version() {
 	// seems like a nice place to sneak in some debug information
 	info, ok := debug.ReadBuildInfo()
@@ -75,5 +77,23 @@ func version() {
 		for _, setting := range info.Settings {
 			slog.Info("build info", "key", setting.Key, "value", setting.Value)
 		}
+	}
+}
+
+// parseLogLevel converts a string to a slog.Level
+func parseLogLevel(value string) slog.Level {
+
+	switch value {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		slog.Warn("parseLogLevel", "unknown log level", value)
+		return slog.LevelDebug
 	}
 }
