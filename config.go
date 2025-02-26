@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"runtime/debug"
 	"time"
 )
@@ -44,10 +45,15 @@ func NewConfig() *Config {
 //
 //	ex: myConfig.Save("go-live-reload.json")
 func (c *Config) Save(filename string) error {
+
+	// convert any paths to the correct format for the OS
+	filename = filepath.FromSlash(filename)
+
 	data, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return err
 	}
+
 	err = os.WriteFile(filename, data, 0644)
 	if err != nil {
 		return err
@@ -59,10 +65,15 @@ func (c *Config) Save(filename string) error {
 //
 //	ex: myConfig.Load("go-live-reload.json")
 func (c *Config) Load(filename string) error {
+
+	// convert any paths to the correct format for the OS
+	filename = filepath.FromSlash(filename)
+
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}
+
 	err = json.Unmarshal(data, c)
 	if err != nil {
 		return err
