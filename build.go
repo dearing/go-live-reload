@@ -14,6 +14,8 @@ import (
 type Build struct {
 	Name          string        `json:"name,omitzero"`
 	Description   string        `json:"description,omitzero"`
+	Match         []string      `json:"match,omitzero"`
+	HeartBeat     time.Duration `json:"heartBeat,omitzero"`
 	BuildCommand  string        `json:"buildCommand,omitzero"`
 	BuildArgs     []string      `json:"buildArgs,omitzero"`
 	BuildEnvirons []string      `json:"buildEnvirons,omitzero"`
@@ -22,8 +24,6 @@ type Build struct {
 	RunArgs       []string      `json:"runArgs,omitzero"`
 	RunEnvirons   []string      `json:"runEnvirons,omitzero"`
 	RunWorkDir    string        `json:"runWorkDir,omitzero"`
-	Match         []string      `json:"match,omitzero"`
-	HeartBeat     time.Duration `json:"heartBeat,omitzero"`
 }
 
 // Build executes the "go" + BuildArgs command in the SrcDir and return any error.
@@ -38,7 +38,11 @@ func (b *Build) Build() error {
 	cmd := exec.Command(b.BuildCommand, b.BuildArgs...)
 
 	cmd.Dir = b.BuildWorkDir
-	cmd.Env = b.BuildEnvirons
+
+	// combine the current process environment with the provided environs
+	if b.BuildEnvirons != nil {
+		cmd.Env = append(os.Environ(), b.BuildEnvirons...)
+	}
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -61,8 +65,13 @@ func (b *Build) Run(ctx context.Context) {
 	slog.Info("run execute", "name", b.Name, "runWorkDir", b.RunWorkDir, "runCommand", b.RunCommand, "runArgs", b.RunArgs, "runEnvirons", b.RunEnvirons)
 
 	cmd := exec.CommandContext(ctx, b.RunCommand, b.RunArgs...)
+
 	cmd.Dir = b.RunWorkDir
-	cmd.Env = b.RunEnvirons
+
+	// combine the current process environment with the provided environs
+	if b.RunEnvirons != nil {
+		cmd.Env = append(os.Environ(), b.RunEnvirons...)
+	}
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -100,11 +109,11 @@ func (b *Build) Start(parentContext context.Context, restart chan struct{}) {
 
 		select {
 		case <-parentContext.Done():
-			slog.Warn("watch shutdown", "name", b.Name)
+			slog.Warn("shutdown signaled", "name", b.Name)
 			runCancel()
 			return
 		case <-restart:
-			slog.Warn("watch restart", "name", b.Name)
+			slog.Warn("restart signal", "name", b.Name)
 			runCancel()
 			continue
 		}

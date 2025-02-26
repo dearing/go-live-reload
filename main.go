@@ -9,11 +9,10 @@ import (
 	"slices"
 	"strings"
 	"syscall"
-	"time"
 )
 
 var argVersion = flag.Bool("version", false, "print debug info and exit")
-var argHeartBeat = flag.Duration("overwrite-heartbeat", 1*time.Second, "temporaryly overwrite all build group heartbeats")
+var argHeartBeat = flag.Duration("overwrite-heartbeat", 0, "temporarily overwrite all build group heartbeats")
 
 var buildGroups = flag.String("build-groups", "", "comma separated list of build groups to run")
 
@@ -48,6 +47,10 @@ to run. If no build groups are specified, all build groups defined in the config
 will be ran. If no matches are found, the tool will exit with an error.
 
 ex: go-live-reload --build-groups=frontend,backend
+
+The environs are appended to the current environment variables. If you need to
+overwrite an environment variable, you can do so by specifying the same key in
+the environs list. If you need to clear it, set the value to an list.
 
 Options:
 	`)

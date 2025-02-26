@@ -18,20 +18,22 @@ type Config struct {
 func NewConfig() *Config {
 
 	c := &Config{
-		Name:        "go-live-reload",
-		Description: "A simple live reload server",
+		Name:        "github.com/dearing/webserver",
+		Description: "sample webserver config",
 		Builds: []Build{
 			{
-				Name:         "myserver",
-				Description:  "A simple web server",
-				BuildCommand: "go",
-				BuildArgs:    []string{"build", "-o", "build/myserver"},
-				BuildWorkDir: "test",
-				RunCommand:   "./build/myserver",
-				RunArgs:      []string{"--bind", ":8081"},
-				RunWorkDir:   "test",
-				Match:        []string{"test/*.go", "test/wwwroot/*"},
-				HeartBeat:    time.Duration(1 * time.Second),
+				Name:          "webserver",
+				Description:   "sample webserver",
+				Match:         []string{"*.go"},
+				HeartBeat:     time.Duration(1 * time.Second),
+				BuildCommand:  "go",
+				BuildArgs:     []string{"build", "-o", "build/webserver"},
+				BuildEnvirons: []string{"CGO_ENABLED=0"},
+				BuildWorkDir:  ".",
+				RunCommand:    "./webserver",
+				RunArgs:       []string{"--www-bind", ":8081", "--www-root", "wwwroot"},
+				RunEnvirons:   []string{"WWWBIND=8081", "WWWROOT=wwwroot"},
+				RunWorkDir:    "build",
 			},
 		},
 	}
