@@ -34,7 +34,7 @@ the heartbeat duration to reduce the frequency of checks.
 
 Tips:
 
-The --overwrite-heartbeat option is used to temporarily overwrite all build group
+1) The --overwrite-heartbeat option is used to temporarily overwrite all build group
 heartbeats with the specified duration. This is useful for tweaking the heartbeat
 based on the host system's performance. Valid options are those that can be parsed
 by Go's time.ParseDuration function. You can observe matches and duration with the
@@ -42,15 +42,16 @@ by Go's time.ParseDuration function. You can observe matches and duration with t
 
 ex: go-live-reload --overwrite-heartbeat=500ms --log-level=debug
 
-The --build-groups option is used to specify a comma separated list of build groups
+2) The --build-groups option is used to specify a comma separated list of build groups
 to run. If no build groups are specified, all build groups defined in the config
 will be ran. If no matches are found, the tool will exit with an error.
 
 ex: go-live-reload --build-groups=frontend,backend
 
-The environs are appended to the current environment variables. If you need to
+3) The ENV lists are appended to the current environment variables. If you need to
 overwrite an environment variable, you can do so by specifying the same key in
-the environs list. If you need to clear it, set the value to an list.
+the ENV list. If you need to clear the environment, set the value to an empty list.
+Clearing and then appending is not supported by this tool.
 
 Options:
 	`)

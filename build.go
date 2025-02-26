@@ -12,18 +12,18 @@ import (
 
 // Build is a struct that represents a build and run process
 type Build struct {
-	Name          string        `json:"name,omitzero"`
-	Description   string        `json:"description,omitzero"`
-	Match         []string      `json:"match,omitzero"`
-	HeartBeat     time.Duration `json:"heartBeat,omitzero"`
-	BuildCommand  string        `json:"buildCommand,omitzero"`
-	BuildArgs     []string      `json:"buildArgs,omitzero"`
-	BuildEnvirons []string      `json:"buildEnvirons,omitzero"`
-	BuildWorkDir  string        `json:"buildWorkDir,omitzero"`
-	RunCommand    string        `json:"runCommand,omitzero"`
-	RunArgs       []string      `json:"runArgs,omitzero"`
-	RunEnvirons   []string      `json:"runEnvirons,omitzero"`
-	RunWorkDir    string        `json:"runWorkDir,omitzero"`
+	Name        string        `json:"name,omitzero"`
+	Description string        `json:"description,omitzero"`
+	Match       []string      `json:"match,omitzero"`
+	HeartBeat   time.Duration `json:"heartBeat,omitzero"`
+	BuildCmd    string        `json:"buildCmd,omitzero"`
+	BuildArgs   []string      `json:"buildArgs,omitzero"`
+	BuildEnv    []string      `json:"buildEnv,omitzero"`
+	BuildDir    string        `json:"buildDir,omitzero"`
+	RunCmd      string        `json:"runCmd,omitzero"`
+	RunArgs     []string      `json:"runArgs,omitzero"`
+	RunEnv      []string      `json:"runEnv,omitzero"`
+	RunDir      string        `json:"runDir,omitzero"`
 }
 
 // Build executes the "go" + BuildArgs command in the SrcDir and return any error.
@@ -31,17 +31,17 @@ type Build struct {
 // ex: err := b.Build()
 func (b *Build) Build() error {
 
-	slog.Info("build execute", "name", b.Name, "buildWorkDir", b.BuildWorkDir, "buildCommand", b.BuildCommand, "buildArgs", b.BuildArgs, "buildEnvirons", b.BuildEnvirons)
+	slog.Info("build execute", "name", b.Name, "buildDir", b.BuildDir, "buildCmd", b.BuildCmd, "buildArgs", b.BuildArgs, "buildEnv", b.BuildEnv)
 
 	start := time.Now()
 
-	cmd := exec.Command(b.BuildCommand, b.BuildArgs...)
+	cmd := exec.Command(b.BuildCmd, b.BuildArgs...)
 
-	cmd.Dir = b.BuildWorkDir
+	cmd.Dir = b.BuildDir
 
 	// combine the current process environment with the provided environs
-	if b.BuildEnvirons != nil {
-		cmd.Env = append(os.Environ(), b.BuildEnvirons...)
+	if b.BuildEnv != nil {
+		cmd.Env = append(os.Environ(), b.BuildEnv...)
 	}
 
 	cmd.Stdout = os.Stdout
@@ -62,15 +62,15 @@ func (b *Build) Build() error {
 // ex: b.Run(ctx)
 func (b *Build) Run(ctx context.Context) {
 
-	slog.Info("run execute", "name", b.Name, "runWorkDir", b.RunWorkDir, "runCommand", b.RunCommand, "runArgs", b.RunArgs, "runEnvirons", b.RunEnvirons)
+	slog.Info("run execute", "name", b.Name, "runDir", b.RunDir, "runCmd", b.RunCmd, "runArgs", b.RunArgs, "runEnv", b.RunEnv)
 
-	cmd := exec.CommandContext(ctx, b.RunCommand, b.RunArgs...)
+	cmd := exec.CommandContext(ctx, b.RunCmd, b.RunArgs...)
 
-	cmd.Dir = b.RunWorkDir
+	cmd.Dir = b.RunDir
 
 	// combine the current process environment with the provided environs
-	if b.RunEnvirons != nil {
-		cmd.Env = append(os.Environ(), b.RunEnvirons...)
+	if b.RunEnv != nil {
+		cmd.Env = append(os.Environ(), b.RunEnv...)
 	}
 
 	cmd.Stdout = os.Stdout
@@ -132,7 +132,7 @@ func (b *Build) Watch(parentContext context.Context, restart chan struct{}) {
 	tick := time.NewTicker(b.HeartBeat)
 	defer tick.Stop()
 
-	memoized := CheckFiles(b.Match)
+	memoized := MatchFiles(b.Match)
 
 	for {
 
@@ -143,7 +143,7 @@ func (b *Build) Watch(parentContext context.Context, restart chan struct{}) {
 		case <-tick.C:
 
 			start := time.Now()
-			files := CheckFiles(b.Match)
+			files := MatchFiles(b.Match)
 
 			if len(files) == 0 {
 				slog.Warn("watch no matches found", "name", b.Name)
@@ -174,10 +174,10 @@ func (b *Build) Watch(parentContext context.Context, restart chan struct{}) {
 	}
 }
 
-// CheckFiles is a function that takes a list of globs and returns a list of FileInfo
+// MatchFiles is a function that takes a list of globs and returns array of FileInfo
 //
-//	ex: files := CheckFiles([]string{"test/*.go", "test/wwwroot/*"})
-func CheckFiles(globs []string) []fs.FileInfo {
+//	ex: files := MatchFiles([]string{"test/*.go", "test/wwwroot/*"})
+func MatchFiles(globs []string) []fs.FileInfo {
 	files := []fs.FileInfo{}
 
 	for _, glob := range globs {
