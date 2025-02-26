@@ -31,6 +31,11 @@ type Build struct {
 // ex: err := b.Build()
 func (b *Build) Build() error {
 
+	if b.BuildCmd == "" {
+		slog.Warn("buildCmd not defined", "name", b.Name, "buildCmd", b.BuildCmd)
+		return nil
+	}
+
 	slog.Info("build execute", "name", b.Name, "buildDir", b.BuildDir, "buildCmd", b.BuildCmd, "buildArgs", b.BuildArgs, "buildEnv", b.BuildEnv)
 
 	start := time.Now()
@@ -61,6 +66,11 @@ func (b *Build) Build() error {
 //
 // ex: b.Run(ctx)
 func (b *Build) Run(ctx context.Context) {
+
+	if b.RunCmd == "" {
+		slog.Warn("runCmd not defined", "name", b.Name, "runCmd", b.RunCmd)
+		return
+	}
 
 	slog.Info("run execute", "name", b.Name, "runDir", b.RunDir, "runCmd", b.RunCmd, "runArgs", b.RunArgs, "runEnv", b.RunEnv)
 
@@ -102,6 +112,7 @@ func (b *Build) Start(parentContext context.Context, restart chan struct{}) {
 		if err != nil {
 			slog.Error("watch", "name", b.Name, "error", err)
 			<-restart // block until the watcher says something changed
+			continue  // retry the build before moving on to running
 		}
 
 		runContext, runCancel := context.WithCancel(parentContext)
