@@ -31,7 +31,7 @@ type Build struct {
 // ex: err := b.Build()
 func (b *Build) Build() error {
 
-	slog.Info("build start", "name", b.Name, "buildWorkDir", b.BuildWorkDir, "buildCommand", b.BuildCommand, "buildArgs", b.BuildArgs, "buildEnvirons", b.BuildEnvirons)
+	slog.Info("build execute", "name", b.Name, "buildWorkDir", b.BuildWorkDir, "buildCommand", b.BuildCommand, "buildArgs", b.BuildArgs, "buildEnvirons", b.BuildEnvirons)
 
 	start := time.Now()
 
@@ -58,7 +58,7 @@ func (b *Build) Build() error {
 // ex: b.Run(ctx)
 func (b *Build) Run(ctx context.Context) {
 
-	slog.Info("run start", "name", b.Name, "runWorkDir", b.RunWorkDir, "runCommand", b.RunCommand, "runArgs", b.RunArgs, "runEnvirons", b.RunEnvirons)
+	slog.Info("run execute", "name", b.Name, "runWorkDir", b.RunWorkDir, "runCommand", b.RunCommand, "runArgs", b.RunArgs, "runEnvirons", b.RunEnvirons)
 
 	cmd := exec.CommandContext(ctx, b.RunCommand, b.RunArgs...)
 	cmd.Dir = b.RunWorkDir
@@ -100,11 +100,11 @@ func (b *Build) Start(parentContext context.Context, restart chan struct{}) {
 
 		select {
 		case <-parentContext.Done():
-			slog.Warn("watch parent interrupt", "name", b.Name)
+			slog.Warn("watch shutdown", "name", b.Name)
 			runCancel()
 			return
 		case <-restart:
-			slog.Warn("watch watcher interrupt", "name", b.Name)
+			slog.Warn("watch restart", "name", b.Name)
 			runCancel()
 			continue
 		}
@@ -137,12 +137,12 @@ func (b *Build) Watch(parentContext context.Context, restart chan struct{}) {
 			files := CheckFiles(b.Match)
 
 			if len(files) == 0 {
-				slog.Warn("watch no files found", "name", b.Name)
+				slog.Warn("watch no matches found", "name", b.Name)
 				continue
 			}
 
 			if len(memoized) == 0 {
-				slog.Warn("watch no files found", "name", b.Name)
+				slog.Warn("watch no matches found", "name", b.Name)
 				continue
 			}
 

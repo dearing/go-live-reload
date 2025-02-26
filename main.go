@@ -13,7 +13,7 @@ import (
 )
 
 var argVersion = flag.Bool("version", false, "print debug info and exit")
-var argHeartBeat = flag.Duration("overwrite-heartbeat", 1*time.Second, "overwrite all durations between checks")
+var argHeartBeat = flag.Duration("overwrite-heartbeat", 1*time.Second, "temporaryly overwrite all build group heartbeats")
 
 var buildGroups = flag.String("build-groups", "", "comma separated list of build groups to run")
 
@@ -24,9 +24,30 @@ var logLevel = flag.String("log-level", "info", "log level (debug, info, warn, e
 func usage() {
 	println(`Usage: go-live-reload [options]
 
-Note about the --overwrite-heartbeat option:
+This tool takes a set of build groups and runs them in parallel. Each build group
+is defined in the configuration file and contains a set of build and run commands
+along with arguments and environment variables. The build group will then watch for 
+changes based on the "match" values and restart just itself when a modification
+is detected or if a new file is added or removed. This is based comparing the 
+current matches to the previous matches every heartbeat duration. If you find the 
+tool is restarting too frequently or there is too much IO pressure, you can increase 
+the heartbeat duration to reduce the frequency of checks.
 
-Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+Tips:
+
+The --overwrite-heartbeat option is used to temporarily overwrite all build group
+heartbeats with the specified duration. This is useful for tweaking the heartbeat
+based on the host system's performance. Valid options are those that can be parsed
+by Go's time.ParseDuration function. You can observe matches and duration with the
+--log-level=debug option.
+
+ex: go-live-reload --overwrite-heartbeat=500ms --log-level=debug
+
+The --build-groups option is used to specify a comma separated list of build groups
+to run. If no build groups are specified, all build groups defined in the config
+will be ran. If no matches are found, the tool will exit with an error.
+
+ex: go-live-reload --build-groups=frontend,backend
 
 Options:
 	`)
