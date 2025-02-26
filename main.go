@@ -127,26 +127,30 @@ func main() {
 	// if no groups are defined, default to all
 	if len(groups) < 1 {
 		slog.Warn("no build-groups defined, defaulting to all")
+	} else {
+		slog.Info("build-groups", "groups", groups)
 	}
 
 	slog.Info("ready", "config-file", *configFile)
 
+	// this will be the parent context for our build-groups
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	builds := 0
-	for _, b := range config.Builds {
+	builds := 0 // track our buildc count
+	// iterate over each build group and start the build and watch goroutines
+	for _, build := range config.Builds {
 
 		// if groups are defined, skip any that are not in the list
-		if len(groups) != 0 && !slices.Contains(groups, b.Name) {
-			slog.Warn("skipping", "build-group", b.Name)
+		if len(groups) != 0 && !slices.Contains(groups, build.Name) {
+			slog.Warn("skipping", "build-group", build.Name)
 			continue
 		}
 
 		// start and watch the build group using the coordinating over the 'restart' channel
 		restart := make(chan struct{})
-		go b.Start(ctx, restart)
-		go b.Watch(ctx, restart)
+		go build.Start(ctx, restart) // start build and run loop for this build group
+		go build.Watch(ctx, restart) // watch for changes in this build group
 
 		builds++
 	}
