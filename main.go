@@ -32,17 +32,17 @@ func main() {
 		c := NewConfig()
 		err := c.Save(*configFile)
 		if err != nil {
-			slog.Error("main/init-config", "error", err)
+			slog.Error("init-config", "error", err)
 			return
 		}
-		slog.Info("main/init-config", "config", *configFile)
+		slog.Info("init-config", "config", *configFile)
 		return
 	}
 
 	config := &Config{}
 	err := config.Load(*configFile)
 	if err != nil {
-		slog.Error("main/config-file", "error", err)
+		slog.Error("config-file", "error", err)
 		return
 	}
 
@@ -79,7 +79,7 @@ func parseLogLevel(value string) slog.Level {
 	case "error":
 		return slog.LevelError
 	default:
-		slog.Warn("main/parseLogLevel", "unknown log level", value)
+		slog.Warn("parseLogLevel", "unknown log level", value)
 		return slog.LevelDebug
 	}
 }

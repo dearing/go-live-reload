@@ -12,18 +12,17 @@ import (
 
 // Build is a struct that represents a build and run process
 type Build struct {
-	Name          string        // `json:"name, omitzero"`
-	SrcDir        string        // `json:"srcDir, omitzero"`
-	OutDir        string        // `json:"outDir, omitzero"`
-	BuildArgs     []string      // `json:"buildArgs, omitzero"`
-	BuildEnvirons []string      // `json:"buildEnvirons, omitzero"`
-	RunCommand    string        // `json:"runCommand, omitzero"`
-	RunArgs       []string      // `json:"runArgs, omitzero"`
-	RunEnvirons   []string      // `json:"runEnvirons, omitzero"`
-	RunWorkDir    string        // `json:"runWorkDir, omitzero"`
-	Globs         []string      // `json:"globs, omitzero"`
-	HeartBeat     time.Duration // `json:"heartBeat, omitzero"`
-
+	Name          string        `json:"name,omitzero"`
+	SrcDir        string        `json:"srcDir,omitzero"`
+	OutDir        string        `json:"outDir,omitzero"`
+	BuildArgs     []string      `json:"buildArgs,omitzero"`
+	BuildEnvirons []string      `json:"buildEnvirons,omitzero"`
+	RunCommand    string        `json:"runCommand,omitzero"`
+	RunArgs       []string      `json:"runArgs,omitzero"`
+	RunEnvirons   []string      `json:"runEnvirons,omitzero"`
+	RunWorkDir    string        `json:"runWorkDir,omitzero"`
+	Globs         []string      `json:"globs,omitzero"`
+	HeartBeat     time.Duration `json:"heartBeat,omitzero"`
 }
 
 // Build executes the "go" + BuildArgs command in the SrcDir and return any error.

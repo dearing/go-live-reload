@@ -13,6 +13,7 @@ type Config struct {
 	Builds      []Build `json:"builds"`
 }
 
+// NewConfig returns a new Config with reasonable defaults
 func NewConfig() *Config {
 
 	c := &Config{
