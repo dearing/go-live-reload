@@ -86,30 +86,38 @@ Options:
 
 ```json
 {
-  "name": "mywebserver",
-  "description": "A simple live reload server",
+  "name": "github.com/dearing/webserver",
+  "description": "sample webserver config",
   "builds": [
     {
-      "Name": "mywebserver",
-      "SrcDir": ".",
-      "OutDir": "build",
-      "BuildArgs": [
+      "name": "webserver",
+      "description": "sample webserver",
+      "match": [
+        "*.go"
+      ],
+      "heartBeat": 1000000000,
+      "buildCmd": "go",
+      "buildArgs": [
         "build",
         "-o",
-        "build/mywebserver"
+        "build/webserver"
       ],
-      "BuildEnvirons": null,
-      "RunCommand": "./mywebserver",
-      "RunArgs": [
-        "--bind",
-        ":8081"
+      "buildEnv": [
+        "CGO_ENABLED=0"
       ],
-      "RunEnvirons": null,
-      "RunWorkDir": "build",
-      "Globs": [
-        "*.go","embeded/template/*", "embeded/wwwroot/*/*", "embeded/wwwroot/*"
+      "buildDir": ".",
+      "runCmd": "./webserver",
+      "runArgs": [
+        "--www-bind",
+        ":8081",
+        "--www-root",
+        "wwwroot"
       ],
-      "HeartBeat": 1000000000
+      "runEnv": [
+        "WWWBIND=8081",
+        "WWWROOT=wwwroot"
+      ],
+      "runDir": "build"
     }
   ]
 }
