@@ -11,14 +11,30 @@ import (
 )
 
 var argVersion = flag.Bool("version", false, "print debug info and exit")
+var argHeartBeat = flag.Duration("overwrite-heartbeat", 1*time.Second, "overwrite all durations between checks")
 
-var heartBeat = flag.Duration("heartbeat", 1*time.Second, "duration between checks")
 var initConfig = flag.Bool("init-config", false, "initialize and save a new config file")
 var configFile = flag.String("config-file", "go-live-reload.json", "load a config file")
 var logLevel = flag.String("log-level", "info", "log level (debug, info, warn, error)")
 
+func usage() {
+	println(`Usage: go-live-reload [options]
+
+Note about the --overwrite-heartbeat option:
+ParseDuration parses a duration string. A duration string is a possibly signed 
+sequence of decimal numbers, each with optional fraction and a unit suffix, 
+such as "300ms", "-1.5h" or "2h45m". 
+
+Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+
+Options:
+	`)
+	flag.PrintDefaults()
+}
+
 func main() {
 
+	flag.Usage = usage
 	flag.Parse()
 
 	slog.SetLogLoggerLevel(parseLogLevel(*logLevel))
@@ -44,6 +60,14 @@ func main() {
 	if err != nil {
 		slog.Error("config-file", "error", err)
 		return
+	}
+
+	if *argHeartBeat > 0 {
+		slog.Info("overwrite-heartbeat", "duration", *argHeartBeat)
+
+		for i := range config.Builds {
+			config.Builds[i].HeartBeat = *argHeartBeat
+		}
 	}
 
 	slog.Info("ready", "config-file", *configFile)
