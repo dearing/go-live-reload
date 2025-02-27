@@ -1,26 +1,44 @@
-package main
+package core
 
 import (
 	"encoding/json"
-	"log/slog"
 	"os"
 	"path/filepath"
-	"runtime/debug"
 	"time"
 )
 
 type Config struct {
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Builds      []Build `json:"builds"`
+	// Name and Description are used internally
+	Name        string `json:"name"`
+	Description string `json:"description"`
+
+	// Builds is a list of Build structs
+	Builds []Build `json:"builds"`
+
+	// ReverseProxy is a map of paths to HttpTarget
+	//	ex: "/api" -> HttpTarget{Host: "http://localhost:8080"}
+	ReverseProxy map[string]HttpTarget `json:"reverseProxy"`
+
+	// Address is the IP and port to bind the server to
+	Bind string `json:"bind,omitzero"`
+
+	// TLSCertFile is the relative path to the TLS certificate file for the server
+	TLSCertFile string `json:"tlsCertFile,omitzero"`
+	// TLSKeyFile is the relative path to the TLS key file for the server
+	TLSKeyFile string `json:"tlsKeyFile,omitzero"`
 }
 
 // NewConfig returns a new Config with reasonable defaults
 func NewConfig() *Config {
 
 	c := &Config{
-		Name:        "github.com/dearing/webserver",
-		Description: "sample webserver config",
+		Name:         "github.com/dearing/webserver",
+		Description:  "sample webserver config",
+		Bind:         ":8443",
+		ReverseProxy: make(map[string]HttpTarget),
+		TLSCertFile:  "cert.pem",
+		TLSKeyFile:   "key.pem",
+
 		Builds: []Build{
 			{
 				Name:        "webserver",
@@ -63,6 +81,21 @@ func NewConfig() *Config {
 			},
 		},
 	}
+
+	// add a default reverse proxy target
+	c.ReverseProxy["/"] = HttpTarget{
+		Host:          "http://localhost:8081",
+		CustomHeaders: make(map[string]string),
+	}
+	c.ReverseProxy["/"].CustomHeaders["Test-Header"] = "Hello World!"
+
+	c.ReverseProxy["/api/"] = HttpTarget{
+		Host:               "https://localhost:8082",
+		CustomHeaders:      make(map[string]string),
+		InsecureSkipVerify: true,
+	}
+	c.ReverseProxy["/api/"].CustomHeaders["Speak-Friend"] = "mellon"
+
 	return c
 }
 
@@ -104,34 +137,4 @@ func (c *Config) Load(filename string) error {
 		return err
 	}
 	return nil
-}
-
-// version retrieves the build information and logs it
-func version() {
-	// seems like a nice place to sneak in some debug information
-	info, ok := debug.ReadBuildInfo()
-	if ok {
-		slog.Info("build info", "main", info.Main.Path, "version", info.Main.Version)
-		for _, setting := range info.Settings {
-			slog.Info("build info", "key", setting.Key, "value", setting.Value)
-		}
-	}
-}
-
-// parseLogLevel converts a string to a slog.Level
-func parseLogLevel(value string) slog.Level {
-
-	switch value {
-	case "debug":
-		return slog.LevelDebug
-	case "info":
-		return slog.LevelInfo
-	case "warn":
-		return slog.LevelWarn
-	case "error":
-		return slog.LevelError
-	default:
-		slog.Warn("parseLogLevel", "unknown log level", value)
-		return slog.LevelDebug
-	}
 }

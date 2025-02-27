@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"context"
@@ -26,7 +26,7 @@ type Build struct {
 	RunDir      string        `json:"runDir,omitzero"`
 }
 
-// Build executes the "go" + BuildArgs command in the SrcDir and return any error.
+// Build executes the configured buildCmd with buildArgs and buildEnv variables.
 //
 // ex: err := b.Build()
 func (b *Build) Build() error {
@@ -66,7 +66,7 @@ func (b *Build) Build() error {
 	return nil
 }
 
-// Run executes the configured command with args and environment variables
+// Run executes the configured runCmd with runArgs and runEnv variables.
 //
 // ex: b.Run(ctx)
 func (b *Build) Run(ctx context.Context) {
@@ -164,11 +164,13 @@ func (b *Build) Watch(parentContext context.Context, restart chan struct{}) {
 			start := time.Now()
 			files := MatchFiles(b.Match)
 
+			// if no files are found, skip the check
 			if len(files) == 0 {
 				slog.Warn("watch no matches found", "name", b.Name)
 				continue
 			}
 
+			// if no files to compare against, skip the check
 			if len(memoized) == 0 {
 				slog.Warn("watch no matches found", "name", b.Name)
 				continue

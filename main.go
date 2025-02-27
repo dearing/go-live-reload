@@ -6,16 +6,17 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"slices"
 	"strings"
 	"syscall"
+
+	"github.com/dearing/go-live-reload/core"
 )
 
 var argVersion = flag.Bool("version", false, "print debug info and exit")
 var argHeartBeat = flag.Duration("overwrite-heartbeat", 0, "temporarily overwrite all build group heartbeats")
-
 var buildGroups = flag.String("build-groups", "", "comma separated list of build groups to run")
-
 var initConfig = flag.Bool("init-config", false, "initialize and save a new config file")
 var configFile = flag.String("config-file", "go-live-reload.json", "load a config file")
 var logLevel = flag.String("log-level", "info", "log level (debug, info, warn, error)")
@@ -65,17 +66,17 @@ func main() {
 	flag.Parse()
 
 	// attempt set log level
-	slog.SetLogLoggerLevel(parseLogLevel(*logLevel))
+	slog.SetLogLoggerLevel(ParseLogLevel(*logLevel))
 
 	// if --version is set, print version and exit
 	if *argVersion {
-		version()
+		Version()
 		return
 	}
 
 	// if --init-config is set, create a new config file and exit
 	if *initConfig {
-		c := NewConfig()
+		c := core.NewConfig()
 		err := c.Save(*configFile)
 		if err != nil {
 			slog.Error("init-config", "error", err)
@@ -85,7 +86,7 @@ func main() {
 		return
 	}
 
-	config := &Config{}
+	config := &core.Config{}
 
 	// if no config file is specified, exit
 	if *configFile == "" {
@@ -103,6 +104,11 @@ func main() {
 	if err != nil {
 		slog.Error("config-file", "error", err)
 		return
+	}
+
+	// check if reverse proxy is defined
+	if len(config.ReverseProxy) > 0 {
+		go config.RunProxy()
 	}
 
 	// overwrite all heartBeats if --overwrite-heartbeat is set
@@ -124,24 +130,30 @@ func main() {
 	// if no groups are defined, default to all
 	if len(groups) < 1 {
 		slog.Warn("no build-groups defined, defaulting to all")
+	} else {
+		slog.Info("build-groups", "groups", groups)
 	}
 
 	slog.Info("ready", "config-file", *configFile)
 
+	// this will be the parent context for our build-groups
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	builds := 0
-	for _, b := range config.Builds {
+	builds := 0 // track our build count
+	// iterate over each build group and start the build and watch goroutines
+	for _, build := range config.Builds {
 
-		if len(groups) != 0 && !slices.Contains(groups, b.Name) {
-			slog.Warn("skipping", "build-group", b.Name)
+		// if groups are defined, skip any that are not in the list
+		if len(groups) != 0 && !slices.Contains(groups, build.Name) {
+			slog.Warn("skipping", "build-group", build.Name)
 			continue
 		}
 
+		// start and watch the build group using the coordinating over the 'restart' channel
 		restart := make(chan struct{})
-		go b.Start(ctx, restart)
-		go b.Watch(ctx, restart)
+		go build.Start(ctx, restart) // start build and run loop for this build group
+		go build.Watch(ctx, restart) // watch for changes in this build group
 
 		builds++
 	}
@@ -152,7 +164,7 @@ func main() {
 		return
 	}
 
-	slog.Info("entering run loop", "count", builds)
+	slog.Info("entering run loop", "build-groups", builds)
 
 	chanSig := make(chan os.Signal, 1)
 	signal.Notify(chanSig, syscall.SIGINT, syscall.SIGTERM)
@@ -162,5 +174,42 @@ func main() {
 		slog.Info("interrupt signal received")
 		cancel()
 		return
+	}
+}
+
+// version retrieves the build information and logs it
+func Version() {
+	// seems like a nice place to sneak in some debug information
+	info, ok := debug.ReadBuildInfo()
+	if ok {
+		slog.Info("buildInfo", "main", info.Main.Path, "goVersion", info.GoVersion, "version", info.Main.Version)
+
+		if len(info.Deps) > 0 {
+			for _, dep := range info.Deps {
+				slog.Info("buildInfo.dep", dep.Path, dep.Version)
+			}
+		}
+
+		for _, setting := range info.Settings {
+			slog.Info("buildInfo.setting", setting.Key, setting.Value)
+		}
+	}
+}
+
+// parseLogLevel converts a string to a slog.Level
+func ParseLogLevel(value string) slog.Level {
+
+	switch value {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		slog.Warn("parseLogLevel", "unknown log level", value)
+		return slog.LevelDebug
 	}
 }
