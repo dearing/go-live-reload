@@ -25,7 +25,7 @@ type HttpTarget struct {
 }
 
 // RunProxy starts a reverse proxy server
-func (c *Config) RunProxy(addr string) {
+func (c *Config) RunProxy() {
 
 	slog.Info("reverse-proxy init")
 
@@ -55,7 +55,7 @@ func (c *Config) RunProxy(addr string) {
 
 				// add any custom headers to the request
 				for k, v := range target.CustomHeaders {
-					slog.Debug("reverse-proxy header", "key", k, "value", v)
+					slog.Debug("reverse-proxy add header", "key", k, "value", v)
 					r.Header.Add(k, v)
 				}
 
@@ -86,17 +86,35 @@ func (c *Config) RunProxy(addr string) {
 	}
 
 	server := &http.Server{
-		Addr:    addr,
+		Addr:    c.Bind,
 		Handler: mux,
 	}
 
 	slog.Info("reverse-proxy listen", "addr", server.Addr)
 
-	err := server.ListenAndServe()
-	if err != nil {
-		slog.Error("reverse-proxy", "error", err)
+	// both cert and key are needed, warn the user if they are not set
+	if c.TLSCertFile == "" && c.TLSKeyFile != "" {
+		slog.Warn("reverse-proxy tls", "cert", "not set", "key", c.TLSKeyFile)
+	} else if c.TLSCertFile != "" && c.TLSKeyFile == "" {
+		slog.Warn("reverse-proxy tls", "cert", c.TLSCertFile, "key", "not set")
 	}
 
+	// if both cert and key are set, start the server with TLS
+	if c.TLSCertFile != "" && c.TLSKeyFile != "" {
+		slog.Info("reverse-proxy tls", "cert", c.TLSCertFile, "key", c.TLSKeyFile)
+		err := server.ListenAndServeTLS(c.TLSCertFile, c.TLSKeyFile)
+		if err != nil {
+			slog.Error("reverse-proxy tls", "error", err)
+			return
+		}
+		// otherwise, start the server without TLS
+	} else {
+		err := server.ListenAndServe()
+		if err != nil {
+			slog.Error("reverse-proxy", "error", err)
+			return
+		}
+	}
 	slog.Info("reverse-proxy shutdown")
 
 }

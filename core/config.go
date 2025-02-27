@@ -19,6 +19,9 @@ type Config struct {
 	//	ex: "/api" -> HttpTarget{Host: "http://localhost:8080"}
 	ReverseProxy map[string]HttpTarget `json:"reverseProxy"`
 
+	// Address is the IP and port to bind the server to
+	Bind string `json:"bind,omitzero"`
+
 	// TLSCertFile is the relative path to the TLS certificate file for the server
 	TLSCertFile string `json:"tlsCertFile,omitzero"`
 	// TLSKeyFile is the relative path to the TLS key file for the server

@@ -108,7 +108,7 @@ func main() {
 
 	// check if reverse proxy is defined
 	if len(config.ReverseProxy) > 0 {
-		go config.RunProxy(":8080")
+		go config.RunProxy()
 	}
 
 	// overwrite all heartBeats if --overwrite-heartbeat is set
