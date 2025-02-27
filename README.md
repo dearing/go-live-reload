@@ -137,6 +137,10 @@ Options:
 >  `tailscale cert mymachine.something-something.ts.net` can give you a cert and key pair perfect for this
 
 ```json
+{
+  "name": "github.com/dearing/webserver",
+  "description": "sample webserver config",
+  "builds": [...],
   "reverseProxy": {
     "/": {
       "host": "http://localhost:8081",
