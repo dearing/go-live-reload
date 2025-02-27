@@ -122,3 +122,34 @@ Options:
   ]
 }
 ```
+## reverse-proxy support
+
+If you have any reverseProxy maps configured for hosts, a go routine will spin up a reverse proxy server to handle requests. The need is niche but nice to have if you don't want to have docker or anything heavy involved. Optionally you can also supply a tls certificate and keypair to serve https, again useful for certain situations where https is required. If you provide both a relative certfile and keyfile location then the proxy will start in HTTPS otherwise HTTP using the `bind` value.
+
+- map an suffix to a downstream host, like `"/api" => "http://localhost:8080"`
+- set `bind` to an address to listen on like `:8443`, `192.168.1.100:80`
+- to enable TLS `tlsCertFile` and `tlsKeyFile` (you need both in this tool, combined cert supported)
+- within the host maps, you can have the proxy inject custom headers
+- streaming works as expected
+
+```json
+  "reverseProxy": {
+    "/": {
+      "host": "http://localhost:8081",
+      "customHeaders": {
+        "Test-Header": "Hello World!"
+      }
+    },
+    "/api/": {
+      "host": "https://localhost:8082",
+      "customHeaders": {
+        "Speak-Friend": "mellon"
+      },
+      "insecureSkipVerify": true
+    }
+  },
+  "bind": ":8443",
+  "tlsCertFile": "build/cert.pem",
+  "tlsKeyFile": "build/key.pem"
+```
+
