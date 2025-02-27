@@ -11,12 +11,17 @@ import (
 
 // HttpTarget is a reverse proxy target
 type HttpTarget struct {
-	//Path          string            `json:"path"`
+
+	// Host is the URL of the target
+	// ex: "http://localhost:8080"
 	Host string `json:"host"`
-	// TLSInsecure   bool              `json:"tlsInsecure,omitzero"`
-	// TLSCertFile   string            `json:"tlsCertFile,omitzero"`
-	// TLSKeyFile    string            `json:"tlsKeyFile,omitzero"`
+
+	// CustomHeaders is a map of headers to add to the request
+	// ex: {"Speak-Friend": "mellon"}
 	CustomHeaders map[string]string `json:"customHeaders,omitzero"`
+
+	// InsecureSkipVerify is a flag to enable or disable TLS verification downstream
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitzero"`
 }
 
 // RunProxy starts a reverse proxy server
@@ -50,7 +55,7 @@ func (c *Config) RunProxy(addr string) {
 
 				// add any custom headers to the request
 				for k, v := range target.CustomHeaders {
-					slog.Info("reverse-proxy header", "key", k, "value", v)
+					slog.Debug("reverse-proxy header", "key", k, "value", v)
 					r.Header.Add(k, v)
 				}
 
@@ -73,12 +78,10 @@ func (c *Config) RunProxy(addr string) {
 		// set the transport to allow insecure connections
 		proxy.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: c.InsecureSkipVerify,
+				InsecureSkipVerify: target.InsecureSkipVerify,
 			},
 		}
-
 		mux.Handle(path, proxy)
-
 		slog.Info("reverse-proxy handle", "path", path, "host", target.Host)
 	}
 

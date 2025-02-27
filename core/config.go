@@ -19,9 +19,6 @@ type Config struct {
 	//	ex: "/api" -> HttpTarget{Host: "http://localhost:8080"}
 	ReverseProxy map[string]HttpTarget `json:"reverseProxy"`
 
-	// InsecureSkipVerify is a flag to enable or disable TLS verification downstream
-	InsecureSkipVerify bool `json:"insecureSkipVerify,omitzero"`
-
 	// TLSCertFile is the relative path to the TLS certificate file for the server
 	TLSCertFile string `json:"tlsCertFile,omitzero"`
 	// TLSKeyFile is the relative path to the TLS key file for the server
@@ -32,14 +29,11 @@ type Config struct {
 func NewConfig() *Config {
 
 	c := &Config{
-		Name:        "github.com/dearing/webserver",
-		Description: "sample webserver config",
-
+		Name:         "github.com/dearing/webserver",
+		Description:  "sample webserver config",
 		ReverseProxy: make(map[string]HttpTarget),
-
-		InsecureSkipVerify: true,
-		TLSCertFile:        "cert.pem",
-		TLSKeyFile:         "key.pem",
+		TLSCertFile:  "cert.pem",
+		TLSKeyFile:   "key.pem",
 
 		Builds: []Build{
 			{
@@ -92,8 +86,9 @@ func NewConfig() *Config {
 	c.ReverseProxy["/"].CustomHeaders["Test-Header"] = "Hello World!"
 
 	c.ReverseProxy["/api/"] = HttpTarget{
-		Host:          "http://localhost:8082",
-		CustomHeaders: make(map[string]string),
+		Host:               "http://localhost:8082",
+		CustomHeaders:      make(map[string]string),
+		InsecureSkipVerify: true,
 	}
 	c.ReverseProxy["/api/"].CustomHeaders["Secret-Header"] = "mellon"
 
