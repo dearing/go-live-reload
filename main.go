@@ -4,6 +4,9 @@ import (
 	"context"
 	"flag"
 	"log/slog"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -16,9 +19,7 @@ import (
 
 var argVersion = flag.Bool("version", false, "print debug info and exit")
 var argHeartBeat = flag.Duration("overwrite-heartbeat", 0, "temporarily overwrite all build group heartbeats")
-
 var buildGroups = flag.String("build-groups", "", "comma separated list of build groups to run")
-
 var initConfig = flag.Bool("init-config", false, "initialize and save a new config file")
 var configFile = flag.String("config-file", "go-live-reload.json", "load a config file")
 var logLevel = flag.String("log-level", "info", "log level (debug, info, warn, error)")
@@ -108,6 +109,60 @@ func main() {
 		return
 	}
 
+	// check if reverse proxy is defined
+	if len(config.ReverseProxy) > 0 {
+
+		mux := http.NewServeMux()
+		for _, target := range config.ReverseProxy {
+
+			url, err := url.Parse(target.Host)
+			if err != nil {
+				slog.Error("reverse-proxy", "error", err, "target", target)
+				return
+			}
+
+			//proxy := httputil.NewSingleHostReverseProxy(url)
+
+			proxy := &httputil.ReverseProxy{
+				// Rewrite: func(r *httputil.ProxyRequest) {
+				// 	slog.Info("reverse-proxy rewrite", "path", target.Path, "host", target.Host)
+				// 	r.SetURL(url)
+				// 	r.Out.Host = r.In.Host // if desired
+				// },
+				Director: func(r *http.Request) {
+					slog.Debug("reverse-proxy request", "path", target.Path, "host", target.Host, "reqPath", r.URL.Path)
+
+					r.URL.Scheme = url.Scheme
+					r.URL.Host = url.Host
+					r.URL.Path = strings.TrimPrefix(r.URL.Path, "/api")
+
+					if !strings.HasPrefix(r.URL.Path, "/") {
+						r.URL.Path = "/" + r.URL.Path
+					}
+
+					slog.Debug("reverse-proxy rewrite", "path", target.Path, "host", target.Host, "reqPath", r.URL.Path)
+
+				},
+			}
+
+			mux.Handle(target.Path, proxy)
+
+			slog.Info("reverse-proxy handle", "path", target.Path, "host", target.Host)
+		}
+
+		server := &http.Server{
+			Addr:    ":8080",
+			Handler: mux,
+		}
+
+		go func() {
+			err := server.ListenAndServe()
+			if err != nil {
+				slog.Error("reverse-proxy", "error", err)
+			}
+		}()
+	}
+
 	// overwrite all heartBeats if --overwrite-heartbeat is set
 	if *argHeartBeat > 0 {
 		slog.Warn("overwrite-heartbeat", "duration", *argHeartBeat)
@@ -137,7 +192,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	builds := 0 // track our buildc count
+	builds := 0 // track our build count
 	// iterate over each build group and start the build and watch goroutines
 	for _, build := range config.Builds {
 

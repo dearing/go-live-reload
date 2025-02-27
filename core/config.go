@@ -8,9 +8,10 @@ import (
 )
 
 type Config struct {
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Builds      []Build `json:"builds"`
+	Name         string       `json:"name"`
+	Description  string       `json:"description"`
+	ReverseProxy []HttpTarget `json:"reverseProxy"`
+	Builds       []Build      `json:"builds"`
 }
 
 // NewConfig returns a new Config with reasonable defaults
@@ -19,6 +20,12 @@ func NewConfig() *Config {
 	c := &Config{
 		Name:        "github.com/dearing/webserver",
 		Description: "sample webserver config",
+		ReverseProxy: []HttpTarget{
+			{
+				Path: "/",
+				Host: "http://localhost:8081",
+			},
+		},
 		Builds: []Build{
 			{
 				Name:        "webserver",
@@ -61,6 +68,7 @@ func NewConfig() *Config {
 			},
 		},
 	}
+
 	return c
 }
 
