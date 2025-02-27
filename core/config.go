@@ -8,10 +8,24 @@ import (
 )
 
 type Config struct {
-	Name         string       `json:"name"`
-	Description  string       `json:"description"`
-	ReverseProxy []HttpTarget `json:"reverseProxy"`
-	Builds       []Build      `json:"builds"`
+	// Name and Description are used internally
+	Name        string `json:"name"`
+	Description string `json:"description"`
+
+	// Builds is a list of Build structs
+	Builds []Build `json:"builds"`
+
+	// ReverseProxy is a map of paths to HttpTarget
+	//	ex: "/api" -> HttpTarget{Host: "http://localhost:8080"}
+	ReverseProxy map[string]HttpTarget `json:"reverseProxy"`
+
+	// InsecureSkipVerify is a flag to enable or disable TLS verification downstream
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitzero"`
+
+	// TLSCertFile is the relative path to the TLS certificate file for the server
+	TLSCertFile string `json:"tlsCertFile,omitzero"`
+	// TLSKeyFile is the relative path to the TLS key file for the server
+	TLSKeyFile string `json:"tlsKeyFile,omitzero"`
 }
 
 // NewConfig returns a new Config with reasonable defaults
@@ -20,13 +34,13 @@ func NewConfig() *Config {
 	c := &Config{
 		Name:        "github.com/dearing/webserver",
 		Description: "sample webserver config",
-		ReverseProxy: []HttpTarget{
-			{
-				Path:               "/",
-				Host:               "http://localhost:8081",
-				InsecureSkipVerify: true,
-			},
-		},
+
+		ReverseProxy: make(map[string]HttpTarget),
+
+		InsecureSkipVerify: true,
+		TLSCertFile:        "cert.pem",
+		TLSKeyFile:         "key.pem",
+
 		Builds: []Build{
 			{
 				Name:        "webserver",
@@ -69,6 +83,19 @@ func NewConfig() *Config {
 			},
 		},
 	}
+
+	// add a default reverse proxy target
+	c.ReverseProxy["/"] = HttpTarget{
+		Host:          "http://localhost:8081",
+		CustomHeaders: make(map[string]string),
+	}
+	c.ReverseProxy["/"].CustomHeaders["Test-Header"] = "Hello World!"
+
+	c.ReverseProxy["/api/"] = HttpTarget{
+		Host:          "http://localhost:8082",
+		CustomHeaders: make(map[string]string),
+	}
+	c.ReverseProxy["/api/"].CustomHeaders["Secret-Header"] = "mellon"
 
 	return c
 }

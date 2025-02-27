@@ -9,11 +9,14 @@ import (
 	"strings"
 )
 
+// HttpTarget is a reverse proxy target
 type HttpTarget struct {
-	Path               string `json:"path"`
-	Host               string `json:"host"`
-	StripPrefix        bool   `json:"stripPrefix"`
-	InsecureSkipVerify bool   `json:"insecureSkipVerify"`
+	//Path          string            `json:"path"`
+	Host string `json:"host"`
+	// TLSInsecure   bool              `json:"tlsInsecure,omitzero"`
+	// TLSCertFile   string            `json:"tlsCertFile,omitzero"`
+	// TLSKeyFile    string            `json:"tlsKeyFile,omitzero"`
+	CustomHeaders map[string]string `json:"customHeaders,omitzero"`
 }
 
 // RunProxy starts a reverse proxy server
@@ -24,7 +27,7 @@ func (c *Config) RunProxy(addr string) {
 	mux := http.NewServeMux()
 
 	// add each reverse proxy target to our MIX
-	for _, target := range c.ReverseProxy {
+	for path, target := range c.ReverseProxy {
 
 		// parse the target into a URL (scheme, host, port)
 		url, err := url.Parse(target.Host)
@@ -36,8 +39,20 @@ func (c *Config) RunProxy(addr string) {
 		// create a new reverse proxy
 		proxy := &httputil.ReverseProxy{
 
+			// ErrorHandler is a function that is called when the reverse proxy encounters an error
+			ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
+				slog.Error("reverse-proxy", "path", path, "host", target.Host, "error", err)
+				http.Error(w, err.Error(), http.StatusBadGateway)
+			},
+
 			// Director is an (oddly named) function that modifies the request before it is sent
 			Director: func(r *http.Request) {
+
+				// add any custom headers to the request
+				for k, v := range target.CustomHeaders {
+					slog.Info("reverse-proxy header", "key", k, "value", v)
+					r.Header.Add(k, v)
+				}
 
 				incoming := r.URL.Path
 
@@ -50,7 +65,7 @@ func (c *Config) RunProxy(addr string) {
 					r.URL.Path = "/" + r.URL.Path
 				}
 
-				slog.Info("reverse-proxy", "path", target.Path, "host", target.Host, "incoming", incoming, "downstream", r.URL.Path)
+				slog.Info("reverse-proxy", "path", path, "host", target.Host, "incoming", incoming, "downstream", r.URL.Path)
 
 			},
 		}
@@ -58,13 +73,13 @@ func (c *Config) RunProxy(addr string) {
 		// set the transport to allow insecure connections
 		proxy.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: target.InsecureSkipVerify,
+				InsecureSkipVerify: c.InsecureSkipVerify,
 			},
 		}
 
-		mux.Handle(target.Path, proxy)
+		mux.Handle(path, proxy)
 
-		slog.Info("reverse-proxy handle", "path", target.Path, "host", target.Host)
+		slog.Info("reverse-proxy handle", "path", path, "host", target.Host)
 	}
 
 	server := &http.Server{
