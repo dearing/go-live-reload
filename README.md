@@ -122,7 +122,7 @@ Options:
   ]
 }
 ```
-## reverse-proxy support
+## HTTP(S) reverse-proxy support
 
 *If* you have any `reverseProxy` maps configured, a go routine will spin up a reverse proxy server to handle requests. The need is niche but nice to have if you don't want to have docker or anything heavy involved. Optionally you can also supply a TLS certificate and keypair to serve HTTPS, again useful for certain situations but not required. If you provide both a relative `tlsCertFile` and `tlsKeyFile` location then the proxy will start in HTTPS mode otherwise HTTP using the same `bind` value in both situations.
 
