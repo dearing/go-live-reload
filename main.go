@@ -4,9 +4,6 @@ import (
 	"context"
 	"flag"
 	"log/slog"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -111,56 +108,7 @@ func main() {
 
 	// check if reverse proxy is defined
 	if len(config.ReverseProxy) > 0 {
-
-		mux := http.NewServeMux()
-		for _, target := range config.ReverseProxy {
-
-			url, err := url.Parse(target.Host)
-			if err != nil {
-				slog.Error("reverse-proxy", "error", err, "target", target)
-				return
-			}
-
-			//proxy := httputil.NewSingleHostReverseProxy(url)
-
-			proxy := &httputil.ReverseProxy{
-				// Rewrite: func(r *httputil.ProxyRequest) {
-				// 	slog.Info("reverse-proxy rewrite", "path", target.Path, "host", target.Host)
-				// 	r.SetURL(url)
-				// 	r.Out.Host = r.In.Host // if desired
-				// },
-				Director: func(r *http.Request) {
-					slog.Debug("reverse-proxy request", "path", target.Path, "host", target.Host, "reqPath", r.URL.Path)
-
-					r.URL.Scheme = url.Scheme
-					r.URL.Host = url.Host
-					r.URL.Path = strings.TrimPrefix(r.URL.Path, "/api")
-
-					if !strings.HasPrefix(r.URL.Path, "/") {
-						r.URL.Path = "/" + r.URL.Path
-					}
-
-					slog.Debug("reverse-proxy rewrite", "path", target.Path, "host", target.Host, "reqPath", r.URL.Path)
-
-				},
-			}
-
-			mux.Handle(target.Path, proxy)
-
-			slog.Info("reverse-proxy handle", "path", target.Path, "host", target.Host)
-		}
-
-		server := &http.Server{
-			Addr:    ":8080",
-			Handler: mux,
-		}
-
-		go func() {
-			err := server.ListenAndServe()
-			if err != nil {
-				slog.Error("reverse-proxy", "error", err)
-			}
-		}()
+		go config.RunProxy(":8080")
 	}
 
 	// overwrite all heartBeats if --overwrite-heartbeat is set
