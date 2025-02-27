@@ -1,6 +1,6 @@
 # go-live-reload
 
-go tool to build and run continuously with optional http/https reverse-proxy
+go tool to build and run *anything* continuously with optional http/https reverse-proxy
 
 > [!NOTE]  
 > this project is built using Go's standard library only and CGO is not needed
