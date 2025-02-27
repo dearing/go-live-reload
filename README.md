@@ -129,7 +129,7 @@ Options:
 ### notes
 - set `bind` to an address to listen on like `:8443`, `192.168.1.100:80`
 - map an suffix to a downstream host, like `"/api/" => "http://localhost:8080"`
-- to enable TLS, *set both* `tlsCertFile` and `tlsKeyFile` (you need both in this tool, combined certs are *not* supported)
+- to enable TLS, *set both* `tlsCertFile` and `tlsKeyFile` (combined certs are *not* supported)
 - within the host map's `customHeaders` you *can* add maps for headers that the proxy will inject for you
 - within the host map you can enable `insecureSkipVerify` to ignore that downstream's TLS certs
 
