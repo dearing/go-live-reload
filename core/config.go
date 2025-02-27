@@ -86,11 +86,11 @@ func NewConfig() *Config {
 	c.ReverseProxy["/"].CustomHeaders["Test-Header"] = "Hello World!"
 
 	c.ReverseProxy["/api/"] = HttpTarget{
-		Host:               "http://localhost:8082",
+		Host:               "https://localhost:8082",
 		CustomHeaders:      make(map[string]string),
 		InsecureSkipVerify: true,
 	}
-	c.ReverseProxy["/api/"].CustomHeaders["Secret-Header"] = "mellon"
+	c.ReverseProxy["/api/"].CustomHeaders["Speak-Friend"] = "mellon"
 
 	return c
 }
