@@ -140,7 +140,7 @@ Options:
 {
   "name": "github.com/dearing/webserver",
   "description": "sample webserver config",
-  "builds": [...],
+  "builds": [],
   "reverseProxy": {
     "/": {
       "host": "http://localhost:8081",
