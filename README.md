@@ -14,7 +14,7 @@ This tool will read a configuration which contains a set of build instructions. 
 go install github.com/dearing/go-live-reload@latest
 ```
 >[!NOTE]
->if your project is Go 1.24+, you can pin the tool to your module workspace instead of installing it in the host's path
+>with Go 1.24+, you can pin the tool to your module workspace instead of installing it in the host's path
 ## go tool usage
 ```
 go get -tool github.com/dearing/go-live-reload@latest
