@@ -34,6 +34,7 @@ func NewConfig() *Config {
 	c := &Config{
 		Name:         "github.com/dearing/webserver",
 		Description:  "sample webserver config",
+		Bind:         ":8443",
 		ReverseProxy: make(map[string]HttpTarget),
 		TLSCertFile:  "cert.pem",
 		TLSKeyFile:   "key.pem",
