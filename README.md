@@ -134,7 +134,7 @@ Options:
 - within the host map you can enable `insecureSkipVerify` to ignore that downstream's TLS certs
 
 > [!TIP]
->  `tailscale cert mymachine.something-something.ts.net` can give you a cert and key pair perfect for this *if* you are on your tailnet
+>  `tailscale cert mymachine.something-something.ts.net` can give you a cert and key pair perfect for this
 
 ```json
   "reverseProxy": {
