@@ -3,7 +3,7 @@
 go tool to build and run continuously with optional http/https reverse-proxy
 
 > [!NOTE]  
-> this project is built using Go's standard library only, CGO is not needed
+> this project is built using Go's standard library only and CGO is not needed
 
 This tool will read a configuration which contains a set of build instructions. These instructions will compile and run until a kill signal is sent `(ctrl+c) or (cmd+c)` to the tool where it will in turn send kill signals to the runners. The configurations also include a set of glob patterns to watch for file modifications. These will be scanned based on the `heartbeat` definition and if a mismatch in the count of files or any of those files having a differing modification timestamp, send the kill signal to that specific runner in the set, rebuild and run again. If a build fails, the runner will halt until a `heartbeat` detects a change. See the example config below to get an idea.
 
