@@ -22,8 +22,9 @@ func NewConfig() *Config {
 		Description: "sample webserver config",
 		ReverseProxy: []HttpTarget{
 			{
-				Path: "/",
-				Host: "http://localhost:8081",
+				Path:               "/",
+				Host:               "http://localhost:8081",
+				InsecureSkipVerify: true,
 			},
 		},
 		Builds: []Build{
