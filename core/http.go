@@ -42,7 +42,7 @@ func (c *Config) RunStatic() {
 
 	// both cert and key are needed, warn the user if they are not set
 	if c.TLSCertFile != "" && c.TLSKeyFile != "" {
-		slog.Info("static-server tls", "cert", c.TLSCertFile, "key", c.TLSKeyFile, "bindAddr", server.Addr)
+		slog.Info("static-server start tls", "cert", c.TLSCertFile, "key", c.TLSKeyFile, "bindAddr", server.Addr, "staticDir", c.StaticServer.StaticDir)
 		err := server.ListenAndServeTLS(c.TLSCertFile, c.TLSKeyFile)
 		if err != nil {
 			slog.Error("static-server tls", "error", err)
@@ -50,8 +50,8 @@ func (c *Config) RunStatic() {
 		}
 		// otherwise, start the server without TLS
 	} else {
+		slog.Info("static-server start", "bindAddr", server.Addr, "staticDir", c.StaticServer.StaticDir)
 		err := server.ListenAndServe()
-		slog.Info("static-server", "bindAddr", server.Addr)
 		if err != nil {
 			slog.Error("static-server", "error", err)
 			return

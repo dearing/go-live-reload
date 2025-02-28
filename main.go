@@ -21,6 +21,12 @@ var initConfig = flag.Bool("init-config", false, "initialize and save a new conf
 var configFile = flag.String("config-file", "go-live-reload.json", "load a config file")
 var logLevel = flag.String("log-level", "info", "log level (debug, info, warn, error)")
 
+var staticServerAddr = flag.String("static-server-addr", "", "start a static file server")
+var staticServerDir = flag.String("static-server-dir", "", "directory to serve static files from")
+
+var tlsCertFile = flag.String("tls-cert-file", "", "path to TLS certificate file")
+var tlsKeyFile = flag.String("tls-key-file", "", "path to TLS key file")
+
 func usage() {
 	println(`Usage: go-live-reload [options]
 
@@ -106,7 +112,22 @@ func main() {
 		return
 	}
 
-	if config.StaticServer.StaticDir != "" {
+	// if static server is defined, start it
+	if *staticServerAddr != "" && *staticServerDir != "" {
+		slog.Warn("static-server", "addr", *staticServerAddr, "dir", *staticServerDir)
+		config.StaticServer.BindAddr = *staticServerAddr
+		config.StaticServer.StaticDir = *staticServerDir
+	}
+
+	// if tls cert and key are defined, set them
+	if *tlsCertFile != "" && *tlsKeyFile != "" {
+		slog.Warn("tls", "cert", *tlsCertFile, "key", *tlsKeyFile)
+		config.TLSCertFile = *tlsCertFile
+		config.TLSKeyFile = *tlsKeyFile
+	}
+
+	// start static server if BindAddr is defined
+	if config.StaticServer.BindAddr != "" {
 		go config.RunStatic()
 	}
 
