@@ -17,10 +17,13 @@ type Config struct {
 
 	// ReverseProxy is a map of paths to HttpTarget
 	//	ex: "/api" -> HttpTarget{Host: "http://localhost:8080"}
-	ReverseProxy map[string]HttpTarget `json:"reverseProxy"`
+	ReverseProxy map[string]HttpTarget `json:"reverseProxy,omitzero"`
+
+	// StaticServer is a StaticServer struct
+	StaticServer StaticServer `json:"staticServer,omitzero"`
 
 	// Address is the IP and port to bind the server to
-	Bind string `json:"bind,omitzero"`
+	BindAddr string `json:"bindAddr,omitzero"`
 
 	// TLSCertFile is the relative path to the TLS certificate file for the server
 	TLSCertFile string `json:"tlsCertFile,omitzero"`
@@ -34,7 +37,7 @@ func NewConfig() *Config {
 	c := &Config{
 		Name:         "github.com/dearing/webserver",
 		Description:  "sample webserver config",
-		Bind:         ":8443",
+		BindAddr:     ":8443",
 		ReverseProxy: make(map[string]HttpTarget),
 		TLSCertFile:  "cert.pem",
 		TLSKeyFile:   "key.pem",
@@ -80,6 +83,10 @@ func NewConfig() *Config {
 				RunDir:  "build",
 			},
 		},
+	}
+
+	c.StaticServer = StaticServer{
+		StaticDir: "wwwroot",
 	}
 
 	// add a default reverse proxy target

@@ -106,6 +106,10 @@ func main() {
 		return
 	}
 
+	if config.StaticServer.StaticDir != "" {
+		go config.RunStatic()
+	}
+
 	// check if reverse proxy is defined
 	if len(config.ReverseProxy) > 0 {
 		go config.RunProxy()

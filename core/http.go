@@ -6,12 +6,63 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strings"
 )
 
+// StaticServer represents a static file server
+type StaticServer struct {
+	// BindAddr is the address to bind the static server to
+	// ex: ":8080"
+	BindAddr string `json:"bindAddr"`
+	// StaticDir is the directory to serve static files from
+	// ex: "./static"
+	StaticDir string `json:"staticDir"`
+}
+
+// RunStatic starts a static file server
+func (c *Config) RunStatic() {
+
+	// use the new OpenRoot because why not
+	root, err := os.OpenRoot(c.StaticServer.StaticDir)
+	if err != nil {
+		slog.Error("static-server", "error", err)
+		return
+	}
+
+	// extract the filesystem from the root
+	fileSystem := root.FS()
+
+	// create a new http server
+	// TODO: maybe create a custom handler for static files to log requests
+	server := &http.Server{
+		Addr:    c.StaticServer.BindAddr,
+		Handler: http.FileServerFS(fileSystem),
+	}
+
+	// both cert and key are needed, warn the user if they are not set
+	if c.TLSCertFile != "" && c.TLSKeyFile != "" {
+		slog.Info("static-server tls", "cert", c.TLSCertFile, "key", c.TLSKeyFile, "bindAddr", server.Addr)
+		err := server.ListenAndServeTLS(c.TLSCertFile, c.TLSKeyFile)
+		if err != nil {
+			slog.Error("static-server tls", "error", err)
+			return
+		}
+		// otherwise, start the server without TLS
+	} else {
+		err := server.ListenAndServe()
+		slog.Info("static-server", "bindAddr", server.Addr)
+		if err != nil {
+			slog.Error("static-server", "error", err)
+			return
+		}
+	}
+	slog.Info("static-server shutdown")
+
+}
+
 // HttpTarget is a reverse proxy target
 type HttpTarget struct {
-
 	// Host is the URL of the target
 	// ex: "http://localhost:8080"
 	Host string `json:"host"`
@@ -86,7 +137,7 @@ func (c *Config) RunProxy() {
 	}
 
 	server := &http.Server{
-		Addr:    c.Bind,
+		Addr:    c.BindAddr,
 		Handler: mux,
 	}
 
